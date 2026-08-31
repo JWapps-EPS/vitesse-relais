@@ -1,0 +1,1907 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Course à Handicap — EPS</title>
+<style>
+  :root{
+    --bg:#F4F4F1;
+    --surface:#FFFFFF;
+    --ink:#181B1F;
+    --ink-soft:#5B6068;
+    --line:#DEDBD3;
+    --track:#B8271F;
+    --track-dark:#8C1E18;
+    --lane:#F2B705;
+    --lane-soft:#FDF1CC;
+    --ok:#2C6E49;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .num{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace; font-variant-numeric:tabular-nums;}
+  h1,h2,h3{
+    font-family:Arial Narrow, "Helvetica Neue", Arial, sans-serif;
+    font-stretch:condensed;
+    letter-spacing:.02em;
+    text-transform:uppercase;
+    margin:0;
+  }
+  header.app{
+    background:var(--ink);
+    color:#fff;
+    padding:22px 24px 18px;
+    position:relative;
+    overflow:hidden;
+  }
+  header.app::after{
+    content:"";
+    position:absolute; left:0; right:0; bottom:0; height:6px;
+    background:repeating-linear-gradient(90deg,var(--lane) 0 28px, transparent 28px 40px);
+    opacity:.9;
+  }
+  header.app h1{font-size:26px; font-weight:800;}
+  header.app p{margin:4px 0 0; color:#C7CBD1; font-size:13px; letter-spacing:.03em;}
+
+  .class-bar{ display:flex; align-items:center; gap:8px; margin-top:14px; flex-wrap:wrap; position:relative; z-index:1; }
+  .class-bar-label{ font-size:11px; text-transform:uppercase; letter-spacing:.04em; color:#C7CBD1; }
+  .class-bar select{ background:#fff; border:none; border-radius:6px; padding:7px 10px; font-size:13px; font-weight:700; color:var(--ink); max-width:200px; }
+  .cb-btn{ background:rgba(255,255,255,.14); border:none; color:#fff; border-radius:6px; padding:7px 10px; font-size:14px; cursor:pointer; line-height:1; }
+  .cb-btn:hover{ background:rgba(255,255,255,.26); }
+
+  .storage-warning{
+    background:var(--lane-soft); color:#7A5B00; font-size:12px; text-align:center;
+    padding:8px 16px; border-bottom:1px solid #EFD98A;
+  }
+
+  nav.tabs{
+    display:flex;
+    background:var(--surface);
+    border-bottom:1px solid var(--line);
+    position:sticky; top:0; z-index:10;
+    overflow-x:auto;
+  }
+  nav.tabs button{
+    flex:1 0 auto;
+    border:none; background:none; cursor:pointer;
+    padding:13px 14px;
+    font-family:inherit; font-weight:700; font-size:12.5px;
+    letter-spacing:.03em; text-transform:uppercase;
+    color:var(--ink-soft);
+    border-bottom:3px solid transparent;
+    white-space:nowrap;
+  }
+  nav.tabs button.active{
+    color:var(--track);
+    border-bottom-color:var(--track);
+  }
+  nav.tabs .step-n{
+    display:inline-block; width:18px; height:18px; line-height:18px;
+    border-radius:50%; background:var(--line); color:var(--ink);
+    font-size:11px; margin-right:6px;
+  }
+  nav.tabs button.active .step-n{background:var(--track); color:#fff;}
+
+  main{max-width:960px; margin:0 auto; padding:20px 16px 60px;}
+  .panel{display:none;}
+  .panel.active{display:block; animation:fade .25s ease;}
+  @keyframes fade{from{opacity:0; transform:translateY(4px);} to{opacity:1; transform:none;}}
+
+  .card{
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:18px;
+    margin-bottom:16px;
+  }
+  .card h2{font-size:16px; margin-bottom:4px;}
+  .card .hint{color:var(--ink-soft); font-size:13px; margin:2px 0 14px; text-transform:none; letter-spacing:normal; font-weight:400;}
+
+  label{font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:.03em; color:var(--ink-soft); display:block; margin-bottom:5px;}
+  input[type=text], input[type=number], select, textarea{
+    width:100%; padding:9px 10px; border:1px solid var(--line); border-radius:6px;
+    font-size:14px; font-family:inherit; background:#fff; color:var(--ink);
+  }
+  textarea{min-height:110px; font-family:ui-monospace,monospace; font-size:13px;}
+  input:focus, select:focus, textarea:focus, button:focus-visible{
+    outline:2px solid var(--track); outline-offset:1px;
+  }
+  .row{display:flex; gap:12px; flex-wrap:wrap;}
+  .row > div{flex:1 1 160px;}
+
+  button.btn{
+    background:var(--track); color:#fff; border:none; border-radius:6px;
+    padding:10px 18px; font-weight:700; font-size:13px; letter-spacing:.03em;
+    text-transform:uppercase; cursor:pointer;
+  }
+  button.btn:hover{background:var(--track-dark);}
+  button.btn.secondary{background:none; color:var(--track); border:1.5px solid var(--track);}
+  button.btn.secondary:hover{background:#FBEAE8;}
+  button.btn.ghost{background:none; color:var(--ink-soft); border:1px solid var(--line); text-transform:none; font-weight:600;}
+  button.btn:disabled{opacity:.4; cursor:not-allowed;}
+
+  table{width:100%; border-collapse:collapse; font-size:14px;}
+  th{
+    text-align:left; font-size:11px; text-transform:uppercase; letter-spacing:.03em;
+    color:var(--ink-soft); padding:8px 8px; border-bottom:2px solid var(--ink);
+  }
+  td{padding:7px 8px; border-bottom:1px solid var(--line);}
+  tr:last-child td{border-bottom:none;}
+  .muted{color:var(--ink-soft);}
+  .right{text-align:right;}
+  .center{text-align:center;}
+  .pill{
+    display:inline-block; padding:2px 9px; border-radius:20px; font-size:11px; font-weight:700;
+    background:var(--lane-soft); color:#7A5B00;
+  }
+  .empty{
+    text-align:center; padding:30px 10px; color:var(--ink-soft); font-size:13px;
+  }
+
+  /* start-line diagram */
+  .track-wrap{overflow-x:auto; padding-bottom:4px;}
+  .lane{
+    position:relative; height:34px; background:
+      repeating-linear-gradient(90deg, #EDEAE0 0 1px, transparent 1px 100%),
+      linear-gradient(#f7f6f2,#f7f6f2);
+    background-size: calc(var(--pct,10%)) 100%, 100% 100%;
+    border-bottom:1px solid var(--line);
+    display:flex; align-items:center; min-width:520px;
+  }
+  .lane:first-child{border-top:1px solid var(--line);}
+  .lane .name{
+    position:absolute; left:6px; font-size:11.5px; font-weight:700; color:var(--ink);
+    z-index:2; text-shadow:0 0 4px #fff, 0 0 4px #fff;
+  }
+  .lane .marker{
+    position:absolute; top:4px; bottom:4px; width:4px; border-radius:2px;
+    background:var(--track);
+  }
+  .lane .marker.leader{background:var(--ink);}
+  .finish-line{
+    position:relative; height:20px; min-width:520px;
+    background:repeating-linear-gradient(90deg,#111 0 10px, #fff 10px 20px);
+    opacity:.85; border-radius:0 0 6px 6px;
+  }
+  .finish-label{font-size:10px; text-transform:uppercase; letter-spacing:.06em; color:var(--ink-soft); text-align:right; margin-top:4px;}
+
+  footer.note{font-size:12px; color:var(--ink-soft); text-align:center; margin-top:24px;}
+
+  /* status select */
+  select.status-select{width:auto; padding:5px 8px; font-size:12px; font-weight:700;}
+  select.status-select.st-disponible{color:var(--ok); border-color:var(--ok);}
+  select.status-select.st-absent{color:#8A6D00; border-color:var(--lane);}
+  select.status-select.st-arret{color:var(--track); border-color:var(--track);}
+
+  /* tournoi */
+  .race-card{border:1px solid var(--line); border-radius:8px; padding:12px 14px; margin-bottom:12px; background:#FBFAF8;}
+  .race-card.done{background:#F3F8F4; border-color:#CFE3D3;}
+  .race-head{display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px; margin-bottom:10px;}
+  .race-head .title{font-weight:800; font-size:13px; text-transform:uppercase; letter-spacing:.03em;}
+  .race-head .badge{font-size:10px; padding:2px 8px; border-radius:20px; font-weight:700; text-transform:uppercase;}
+  .badge.type-aleatoire{background:var(--lane-soft); color:#7A5B00;}
+  .badge.type-niveau{background:#E5EEFB; color:#1E4E8C;}
+  .badge.done{background:#DCEEDF; color:var(--ok);}
+  .race-participants{display:flex; flex-direction:column; gap:6px;}
+  .race-participant{display:flex; align-items:center; justify-content:space-between; gap:10px; padding:5px 0; border-bottom:1px dashed var(--line);}
+  .race-participant:last-child{border-bottom:none;}
+  .race-participant.stacked{flex-direction:column; align-items:stretch; gap:5px; padding:7px 0;}
+  .race-participant .pname{font-size:13.5px; font-weight:600;}
+  .race-participant .pts-earned{font-size:11px; color:var(--ok); font-weight:700; min-width:60px; text-align:right;}
+  .rank-btns{display:flex; flex-wrap:wrap; gap:4px;}
+  .rank-btn{
+    min-width:30px; padding:4px 5px; font-size:10.5px; font-weight:700;
+    border:1px solid var(--line); border-radius:6px; background:#fff; color:var(--ink-soft); cursor:pointer;
+    font-family:system-ui,sans-serif;
+  }
+  .rank-btn.selected{background:var(--track); border-color:var(--track); color:#fff;}
+  .rank-btn:disabled{opacity:.3; cursor:not-allowed; background:var(--bg);}
+  .race-actions{display:flex; gap:8px; margin-top:10px;}
+  #generalTable tr:nth-child(1) td.rangcell{color:var(--track); font-weight:800;}
+  #generalTable tr:nth-child(2) td.rangcell, #generalTable tr:nth-child(3) td.rangcell{font-weight:800;}
+
+  /* numeric keypad modal */
+  .keypad-overlay{
+    position:fixed; inset:0; background:rgba(15,17,20,.55);
+    display:none; align-items:center; justify-content:center; z-index:200; padding:16px;
+  }
+  .keypad-overlay.open{display:flex;}
+  .keypad-box{
+    background:#fff; border-radius:14px; padding:18px; width:100%; max-width:300px;
+    box-shadow:0 20px 60px rgba(0,0,0,.35);
+  }
+  .keypad-title{font-size:12px; font-weight:800; text-transform:uppercase; letter-spacing:.03em; color:var(--ink-soft); text-align:center; margin-bottom:8px;}
+  .keypad-display{
+    font-family:ui-monospace,monospace; font-size:32px; font-weight:700; text-align:center;
+    padding:14px 10px; background:var(--bg); border-radius:10px; margin-bottom:14px; letter-spacing:.02em;
+    min-height:24px; color:var(--ink);
+  }
+  .keypad-display .unit{font-size:14px; color:var(--ink-soft); margin-left:4px; font-family:system-ui,sans-serif; font-weight:600;}
+  .keypad-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:10px;}
+  .keypad-grid button{
+    padding:16px 0; font-size:20px; font-weight:700; border:1px solid var(--line); border-radius:10px;
+    background:#fff; color:var(--ink); cursor:pointer; font-family:ui-monospace,monospace;
+  }
+  .keypad-grid button:active{background:var(--bg);}
+  .keypad-grid button.fn{color:var(--track); font-family:system-ui,sans-serif; font-size:15px;}
+  .keypad-actions{display:flex; gap:8px;}
+  .keypad-actions button{flex:1;}
+
+  /* floating action button */
+  .fab{
+    position:fixed; right:18px; bottom:18px; width:54px; height:54px; border-radius:50%;
+    background:var(--ink); color:#fff; border:none; font-size:22px; cursor:pointer;
+    box-shadow:0 8px 22px rgba(0,0,0,.32); z-index:150; display:flex; align-items:center; justify-content:center;
+  }
+  .fab:hover{background:#000;}
+
+  details summary{list-style:none; position:relative;}
+  details summary::-webkit-details-marker{display:none;}
+  details summary::before{content:"▸"; color:var(--ink-soft); font-size:12px; margin-right:8px;}
+  details[open] summary::before{content:"▾";}
+
+  /* relais */
+  .relay-session{border:1px solid var(--line);}
+  .relay-session-name{font-weight:800; font-size:15px; border:1px solid transparent; background:none; padding:2px 4px; max-width:220px;}
+  .relay-session-name:hover, .relay-session-name:focus{border-color:var(--line); background:#fff;}
+  .relay-filter-bar{display:flex; flex-wrap:wrap; gap:6px; margin-bottom:14px;}
+  .relay-filter-btn{
+    font-size:11.5px; padding:5px 11px; border-radius:20px; border:1.5px solid var(--line);
+    background:#fff; cursor:pointer; font-weight:700; color:var(--ink-soft);
+    display:inline-flex; align-items:center; gap:6px;
+  }
+  .relay-filter-btn .dot{width:9px; height:9px; border-radius:50%; display:inline-block; background:var(--gcolor, var(--ink-soft)); flex-shrink:0;}
+  .relay-filter-btn.active{background:var(--ink); color:#fff; border-color:var(--ink);}
+  .relay-groups-grid{display:grid; grid-template-columns:repeat(auto-fit, minmax(280px,1fr)); gap:12px;}
+  .relay-group{
+    border:1px solid var(--line); border-left-width:6px; border-radius:8px; padding:12px;
+    background:#fff; min-width:0;
+  }
+  .relay-group-head{display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; gap:8px;}
+  .relay-group-badge{
+    display:inline-flex; align-items:center; justify-content:center; width:22px; height:22px;
+    border-radius:50%; background:var(--gcolor, var(--ink-soft)); color:#fff; font-size:11px; font-weight:800;
+    flex-shrink:0;
+  }
+  .relay-group-title{display:flex; align-items:center; gap:7px; font-weight:800; font-size:12.5px; text-transform:uppercase; letter-spacing:.02em;}
+  .relay-selects{display:grid; grid-template-columns:repeat(auto-fit, minmax(120px,1fr)); gap:8px;}
+  .relay-leg{border:1px solid var(--line); border-radius:7px; padding:8px 10px; margin-top:8px; background:var(--bg); min-width:0;}
+  .relay-leg-head{display:flex; justify-content:space-between; align-items:baseline; gap:6px; font-size:10.5px; font-weight:800; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.02em; margin-bottom:4px;}
+  .relay-leg-players{font-size:13px; font-weight:700; margin-bottom:5px; word-break:break-word;}
+  .relay-leg-players .arrow{color:var(--track); margin:0 4px;}
+  .relay-leg-meta{display:flex; flex-wrap:wrap; align-items:center; gap:6px 10px; font-size:11.5px;}
+  .relay-leg-meta .relay-time-input{width:58px; padding:5px 6px; text-align:center;}
+  .relay-leg-result{font-size:11px; font-weight:700;}
+  .relay-selects select{font-size:12.5px; padding:7px 8px;}
+  .relay-group table{margin-top:10px; background:#fff; border-radius:6px; overflow:hidden;}
+  .relay-group th, .relay-group td{font-size:12px; padding:6px 6px;}
+  .relay-time-input{width:64px; padding:5px 6px; text-align:center;}
+  .relay-legend{display:flex; flex-wrap:wrap; gap:10px; font-size:11.5px; color:var(--ink-soft); margin-top:8px;}
+
+  @media print{
+    nav.tabs, .no-print{display:none !important;}
+    .panel{display:block !important;}
+    header.app{background:#fff; color:#000;}
+    header.app::after{display:none;}
+    body{background:#fff;}
+  }
+</style>
+</head>
+<body>
+
+<div class="storage-warning no-print" id="storageWarning" style="display:none;">
+  ⚠️ La sauvegarde automatique locale n'est pas disponible dans cet aperçu. Téléchargez ce fichier et ouvrez-le dans votre navigateur pour activer l'enregistrement.
+</div>
+
+<header class="app">
+  <h1>Course à handicap</h1>
+  <p>Mesure de vitesse &amp; calcul des départs échelonnés — EPS</p>
+  <div class="class-bar">
+    <span class="class-bar-label">Classe</span>
+    <select id="classSelect"></select>
+    <button type="button" class="cb-btn" id="btnNewClass" title="Nouvelle classe">➕</button>
+    <button type="button" class="cb-btn" id="btnRenameClass" title="Renommer la classe">✏️</button>
+    <button type="button" class="cb-btn" id="btnDeleteClass" title="Supprimer la classe">🗑️</button>
+  </div>
+</header>
+
+<nav class="tabs" id="tabs">
+  <button data-tab="import" class="active"><span class="step-n">1</span>Élèves</button>
+  <button data-tab="vitesse"><span class="step-n">2</span>Vitesse</button>
+  <button data-tab="handicap"><span class="step-n">3</span>Handicap</button>
+  <button data-tab="resultats"><span class="step-n">4</span>Résultats</button>
+  <button data-tab="tournoi"><span class="step-n">5</span>Tournoi</button>
+  <button data-tab="relais"><span class="step-n">6</span>Relais</button>
+</nav>
+
+<main>
+
+  <!-- ===== PANEL 1 : IMPORT ===== -->
+  <section class="panel active" id="panel-import">
+    <div class="card">
+      <h2>Importer les élèves</h2>
+      <p class="hint">Fichier CSV avec une colonne « Nom », « Prénom » (les deux si besoin), ou une colonne unique « Prénom Nom ». Séparateur virgule ou point-virgule. Les élèves sont ajoutés à la classe actuellement sélectionnée.</p>
+      <div class="row">
+        <div>
+          <label for="csvFile">Fichier CSV</label>
+          <input type="file" id="csvFile" accept=".csv,text/csv">
+        </div>
+      </div>
+      <p class="hint" style="margin-top:14px;">Ou collez directement le contenu :</p>
+      <textarea id="csvText" placeholder="Prénom;Nom&#10;Lina;Martin&#10;Yanis;Dubois"></textarea>
+      <div style="margin-top:10px; display:flex; gap:10px;">
+        <button class="btn" id="btnParseCsv">Importer la liste</button>
+        <button class="btn ghost" id="btnAddOne">+ Ajouter un élève</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Liste des élèves <span class="pill" id="countPill">0</span></h2>
+      <table id="studentTable">
+        <thead><tr><th>Nom</th><th style="width:170px;">Statut</th><th style="width:40px;"></th></tr></thead>
+        <tbody></tbody>
+      </table>
+      <div class="empty" id="studentEmpty">Aucun élève importé pour l'instant.</div>
+    </div>
+  </section>
+
+  <!-- ===== PANEL 2 : VITESSE ===== -->
+  <section class="panel" id="panel-vitesse">
+    <div class="card">
+      <h2>Mesure de vitesse</h2>
+      <p class="hint">Choisissez la distance testée et le nombre d'essais. Le temps de référence de chaque élève est la moyenne des essais renseignés.</p>
+      <div class="row">
+        <div>
+          <label for="testDistanceSelect">Distance</label>
+          <select id="testDistanceSelect">
+            <option value="30">30 m</option>
+            <option value="50">50 m</option>
+            <option value="60" selected>60 m</option>
+            <option value="custom">Autre…</option>
+          </select>
+        </div>
+        <div id="customDistanceWrap" style="display:none;">
+          <label for="customDistance">Distance personnalisée (m)</label>
+          <input type="number" id="customDistance" min="1" step="1" value="40">
+        </div>
+        <div>
+          <label for="testAttemptsInput">Nombre d'essais</label>
+          <input type="text" inputmode="numeric" readonly id="testAttemptsInput" value="1">
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Temps des élèves <span class="muted" id="testDistLabel" style="text-transform:none; font-weight:400; font-size:12px;"></span></h2>
+      <div style="overflow-x:auto;">
+        <table id="timeTable">
+          <thead><tr><th>Élève</th><th style="width:70px;">Essai 1</th><th class="right">Moyenne</th><th class="right">Vitesse</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <div class="empty" id="timeEmpty">Importez d'abord des élèves dans l'onglet « Élèves ».</div>
+    </div>
+  </section>
+
+  <!-- ===== PANEL 3 : HANDICAP ===== -->
+  <section class="panel" id="panel-handicap">
+    <div class="card">
+      <h2>Paramètres de la course</h2>
+      <p class="hint">La distance de course peut être différente de la distance testée. Chaque élève court une distance réduite proportionnelle à sa vitesse, pour finir en même temps que le plus rapide.</p>
+      <div class="row">
+        <div>
+          <label for="refDistanceSelect">Vitesse de référence mesurée sur</label>
+          <select id="refDistanceSelect"></select>
+        </div>
+        <div>
+          <label for="raceDistance">Distance de la course à handicap (m)</label>
+          <input type="number" id="raceDistance" min="1" step="1" value="60">
+        </div>
+      </div>
+      <div style="margin-top:12px;">
+        <button class="btn" id="btnCalcHandicap">Calculer les départs</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== PANEL 4 : RESULTATS ===== -->
+  <section class="panel" id="panel-resultats">
+    <div class="card no-print" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+      <h2 style="margin:0;">Résultats</h2>
+      <div style="display:flex; gap:8px;">
+        <button class="btn secondary" id="btnExportCsv">Exporter CSV</button>
+        <button class="btn ghost" id="btnPrint">Imprimer</button>
+      </div>
+    </div>
+
+    <div class="card" id="resultsCard">
+      <div class="empty" id="resultsEmpty">Calculez d'abord les départs dans l'onglet « Handicap ».</div>
+      <div id="resultsContent" style="display:none;">
+        <h2 style="font-size:15px; margin-bottom:10px;">Ligne de départ — vue d'ensemble</h2>
+        <div class="track-wrap">
+          <div id="laneDiagram"></div>
+          <div class="finish-line"></div>
+          <div class="finish-label">Ligne d'arrivée →</div>
+        </div>
+
+        <h2 style="font-size:15px; margin:22px 0 10px;">Tableau des départs</h2>
+        <table id="resultsTable">
+          <thead>
+            <tr>
+              <th>Élève</th>
+              <th class="right">Vitesse test</th>
+              <th class="right">Distance à parcourir</th>
+              <th class="right">Avance / recul</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== PANEL 5 : TOURNOI ===== -->
+  <section class="panel" id="panel-tournoi">
+    <div class="card">
+      <h2>Course en cours</h2>
+      <div id="currentRaceArea"></div>
+    </div>
+
+    <details class="card" id="historyDetails" style="padding:0;">
+      <summary style="cursor:pointer; padding:18px; list-style:none; display:flex; align-items:center; justify-content:space-between;">
+        <span style="font-family:Arial Narrow, Arial, sans-serif; font-weight:800; font-size:15px; letter-spacing:.02em; text-transform:uppercase;">Historique des courses</span>
+        <span class="pill" id="raceCountPill">0</span>
+      </summary>
+      <div style="padding:0 18px 18px;">
+        <div id="racesList"></div>
+        <div class="empty" id="racesEmpty">Aucune course créée pour l'instant.</div>
+      </div>
+    </details>
+
+    <div class="card">
+      <h2>Classement général</h2>
+      <table id="generalTable">
+        <thead><tr><th style="width:40px;">Rg</th><th>Élève</th><th class="right">Points</th><th class="right">Courses</th><th>Statut</th></tr></thead>
+        <tbody></tbody>
+      </table>
+      <div class="empty" id="generalEmpty">Aucun élève importé.</div>
+    </div>
+
+    <button type="button" class="fab no-print" id="btnOpenSettings" title="Réglages du tournoi" aria-label="Réglages du tournoi">⚙️</button>
+  </section>
+
+  <!-- ===== PANEL 6 : RELAIS ===== -->
+  <section class="panel" id="panel-relais">
+    <div class="card">
+      <h2>Séances de relais</h2>
+      <p class="hint">Composez des groupes de 3 ou 4 élèves via les listes déroulantes. L'application génère automatiquement la rotation donneur / receveur / chronométreur et calcule l'objectif à partir des temps individuels moyens.</p>
+      <button class="btn" id="btnNewRelaySession">+ Nouvelle séance</button>
+    </div>
+
+    <div id="relaySessionFilterBar" class="relay-filter-bar" style="display:none;"></div>
+
+    <div id="relaySessionsList"></div>
+    <div class="empty" id="relayEmpty">Aucune séance créée.</div>
+
+    <button type="button" class="fab no-print" id="btnOpenRelaySettings" title="Réglages du barème" aria-label="Réglages du barème">⚙️</button>
+  </section>
+
+</main>
+
+<footer class="note no-print">Application autonome — fonctionne hors connexion. Les données sont enregistrées uniquement dans le navigateur de cet appareil.</footer>
+
+<!-- ===== SETTINGS MODAL (TOURNOI) ===== -->
+<div class="keypad-overlay no-print" id="settingsOverlay">
+  <div class="keypad-box" style="max-width:380px; text-align:left;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+      <div class="keypad-title" style="margin:0;">Réglages du tournoi</div>
+      <button type="button" class="btn ghost" id="settingsClose" style="padding:4px 10px; font-size:15px;">✕</button>
+    </div>
+    <div class="row">
+      <div>
+        <label for="runnersPerRace">Coureurs par course</label>
+        <input type="text" inputmode="numeric" readonly id="runnersPerRace" value="4">
+      </div>
+      <div>
+        <label for="tournoiRefDistance">Vitesse mesurée sur</label>
+        <select id="tournoiRefDistance"></select>
+      </div>
+    </div>
+    <div class="row" style="margin-top:12px;">
+      <div>
+        <label for="tournoiRaceDistance">Distance de course (handicap, m)</label>
+        <input type="text" inputmode="numeric" readonly id="tournoiRaceDistance" value="30">
+      </div>
+    </div>
+    <h3 style="margin-top:18px; font-size:12px; letter-spacing:.03em;">Barème de points par classement</h3>
+    <p class="hint" style="margin-top:4px;">Appliqué automatiquement à la validation du classement.</p>
+    <div id="pointsTableWrap" style="overflow-x:auto; margin-top:4px;"></div>
+  </div>
+</div>
+
+<!-- ===== SETTINGS MODAL (RELAIS) ===== -->
+<div class="keypad-overlay no-print" id="relaySettingsOverlay">
+  <div class="keypad-box" style="max-width:380px; text-align:left;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+      <div class="keypad-title" style="margin:0;">Réglages du relais</div>
+      <button type="button" class="btn ghost" id="relaySettingsClose" style="padding:4px 10px; font-size:15px;">✕</button>
+    </div>
+    <div class="row">
+      <div>
+        <label for="relayRefDistance">Vitesse individuelle mesurée sur</label>
+        <select id="relayRefDistance"></select>
+      </div>
+    </div>
+    <h3 style="margin-top:18px; font-size:12px; letter-spacing:.03em;">Barème d'interprétation</h3>
+    <p class="hint" style="margin-top:4px;">Écart maximum (temps réalisé − objectif, en secondes) pour chaque niveau. Un écart négatif ou nul signifie que le relais a été plus rapide que la somme individuelle.</p>
+    <div class="row">
+      <div>
+        <label for="relayThreshold1">🟩 Excellent : écart ≤</label>
+        <input type="text" inputmode="decimal" readonly id="relayThreshold1" value="0">
+      </div>
+      <div>
+        <label for="relayThreshold2">🟢 Bien : écart ≤</label>
+        <input type="text" inputmode="decimal" readonly id="relayThreshold2" value="0,5">
+      </div>
+    </div>
+    <div class="row" style="margin-top:12px;">
+      <div>
+        <label for="relayThreshold3">🟠 Moyen : écart ≤</label>
+        <input type="text" inputmode="decimal" readonly id="relayThreshold3" value="1,5">
+      </div>
+      <div>
+        <label>🔴 À travailler</label>
+        <p class="hint" style="margin-top:9px;">Au-delà du seuil « Moyen ».</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== NUMERIC KEYPAD MODAL ===== -->
+<div class="keypad-overlay no-print" id="keypadOverlay">
+  <div class="keypad-box">
+    <div class="keypad-title" id="keypadTitle">Temps</div>
+    <div class="keypad-display"><span id="keypadDisplay">0</span><span class="unit" id="keypadUnit">s</span></div>
+    <div class="keypad-grid">
+      <button type="button" data-key="7">7</button>
+      <button type="button" data-key="8">8</button>
+      <button type="button" data-key="9">9</button>
+      <button type="button" data-key="4">4</button>
+      <button type="button" data-key="5">5</button>
+      <button type="button" data-key="6">6</button>
+      <button type="button" data-key="1">1</button>
+      <button type="button" data-key="2">2</button>
+      <button type="button" data-key="3">3</button>
+      <button type="button" class="fn" data-key="C">C</button>
+      <button type="button" data-key="0">0</button>
+      <button type="button" class="fn" data-key=",">,</button>
+      <button type="button" class="fn" data-key="±">±</button>
+      <button type="button" class="fn" data-key="⌫" style="grid-column:span 2;">⌫ effacer</button>
+    </div>
+    <div class="keypad-actions">
+      <button type="button" class="btn ghost" id="keypadCancel">Annuler</button>
+      <button type="button" class="btn" id="keypadValidate">Valider</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  const STORAGE_KEY = 'athletisme_eps_store_v1';
+  let storageWarned = false;
+
+  function showStorageWarning(){
+    if(storageWarned) return;
+    storageWarned = true;
+    const el = document.getElementById('storageWarning');
+    if(el) el.style.display = 'block';
+  }
+
+  function persist(){
+    try{
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
+    }catch(e){
+      showStorageWarning();
+    }
+  }
+
+  function loadPersisted(){
+    try{
+      const raw = localStorage.getItem(STORAGE_KEY);
+      return raw ? JSON.parse(raw) : null;
+    }catch(e){
+      showStorageWarning();
+      return null;
+    }
+  }
+
+  // ---------- CLASSES / STORE ----------
+  function emptyClassData(name){
+    return {
+      name: name,
+      students: [], nextId: 1,
+      tests: {}, testAttempts: 1,
+      pointsConfig: {}, races: [], raceNextId: 1,
+      tournoiConfig: { runnersPerRace:'4', refDistance:'', raceDistance:'30' },
+      relaySessions: [], relaySessionNextId: 1, relayGroupNextId: 1,
+      relayConfig: { refDistance:'', t1:0, t2:0.5, t3:1.5 },
+      relaySessionFilter: null
+    };
+  }
+
+  let store = { currentClassId: null, classes: {} };
+
+  // ---------- LIVE STATE (classe actuellement chargée) ----------
+  let students = [];
+  let nextId = 1;
+  let tests = {};
+  let testAttempts = 1;
+  let pointsConfig = {};
+  let races = [];
+  let raceNextId = 1;
+  let relaySessions = [];
+  let relaySessionNextId = 1;
+  let relayGroupNextId = 1;
+  let relayBareme = { t1:0, t2:0.5, t3:1.5 };
+  let relaySessionFilter = null;
+  let lastResults = null;
+
+  // ---------- HELPERS ----------
+  function fmt(n, dec){ return Number(n).toFixed(dec===undefined?2:dec); }
+
+  function escapeHtml(s){
+    return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  function studentById(id){
+    return students.find(s=>s.id===id) || null;
+  }
+
+  function currentTestDistance(){
+    const sel = document.getElementById('testDistanceSelect').value;
+    if(sel === 'custom'){
+      return parseFloat(document.getElementById('customDistance').value) || 0;
+    }
+    return parseFloat(sel);
+  }
+
+  function speedFor(distance, time){
+    if(!distance || !time || time<=0) return null;
+    const ms = distance / time;
+    return { ms: ms, kmh: ms * 3.6 };
+  }
+
+  function averageTime(arr){
+    if(!arr) return null;
+    const valid = arr.filter(t => t!==null && t!==undefined && t>0);
+    if(!valid.length) return null;
+    return valid.reduce((a,b)=>a+b,0) / valid.length;
+  }
+
+  function shuffle(arr){
+    for(let i=arr.length-1;i>0;i--){
+      const j = Math.floor(Math.random()*(i+1));
+      [arr[i],arr[j]] = [arr[j],arr[i]];
+    }
+    return arr;
+  }
+
+  function distancesWithData(){
+    return Object.keys(tests).filter(k => Object.keys(tests[k]).length > 0)
+      .map(Number).sort((a,b)=>a-b);
+  }
+
+  // ---------- PERSISTANCE : snapshot classe courante ----------
+  function snapshotCurrentClass(){
+    if(!store.currentClassId) return;
+    const c = store.classes[store.currentClassId];
+    if(!c) return;
+    c.students = students;
+    c.nextId = nextId;
+    c.tests = tests;
+    c.testAttempts = testAttempts;
+    c.pointsConfig = pointsConfig;
+    c.races = races;
+    c.raceNextId = raceNextId;
+    c.tournoiConfig = {
+      runnersPerRace: document.getElementById('runnersPerRace').value,
+      refDistance: document.getElementById('tournoiRefDistance').value,
+      raceDistance: document.getElementById('tournoiRaceDistance').value
+    };
+    c.relaySessions = relaySessions;
+    c.relaySessionNextId = relaySessionNextId;
+    c.relayGroupNextId = relayGroupNextId;
+    c.relayConfig = {
+      refDistance: document.getElementById('relayRefDistance').value,
+      t1: relayBareme.t1, t2: relayBareme.t2, t3: relayBareme.t3
+    };
+    c.relaySessionFilter = relaySessionFilter;
+  }
+
+  function saveData(){
+    snapshotCurrentClass();
+    persist();
+  }
+
+  function loadClass(classId){
+    const c = store.classes[classId];
+    if(!c) return;
+    store.currentClassId = classId;
+
+    students = c.students; nextId = c.nextId;
+    tests = c.tests; testAttempts = c.testAttempts || 1;
+    pointsConfig = c.pointsConfig; races = c.races; raceNextId = c.raceNextId;
+    relaySessions = c.relaySessions; relaySessionNextId = c.relaySessionNextId; relayGroupNextId = c.relayGroupNextId;
+    relayBareme = { t1: c.relayConfig.t1, t2: c.relayConfig.t2, t3: c.relayConfig.t3 };
+    relaySessionFilter = c.relaySessionFilter || null;
+    lastResults = null;
+
+    document.getElementById('runnersPerRace').value = c.tournoiConfig.runnersPerRace || '4';
+    document.getElementById('tournoiRaceDistance').value = c.tournoiConfig.raceDistance || '30';
+    document.getElementById('testAttemptsInput').value = testAttempts;
+    document.getElementById('relayThreshold1').value = String(relayBareme.t1).replace('.',',');
+    document.getElementById('relayThreshold2').value = String(relayBareme.t2).replace('.',',');
+    document.getElementById('relayThreshold3').value = String(relayBareme.t3).replace('.',',');
+
+    document.getElementById('resultsEmpty').style.display = 'block';
+    document.getElementById('resultsContent').style.display = 'none';
+
+    renderClassSelector();
+    renderAll();
+
+    const tRef = document.getElementById('tournoiRefDistance');
+    if(c.tournoiConfig.refDistance && [...tRef.options].some(o=>o.value===c.tournoiConfig.refDistance)) tRef.value = c.tournoiConfig.refDistance;
+    const rRef = document.getElementById('relayRefDistance');
+    if(c.relayConfig.refDistance && [...rRef.options].some(o=>o.value===c.relayConfig.refDistance)) rRef.value = c.relayConfig.refDistance;
+  }
+
+  function renderAll(){
+    renderStudentTable();
+    renderTimeTable();
+    renderRefDistanceOptions();
+    renderPointsTable();
+    renderTournoiRefOptions();
+    renderCurrentRace();
+    renderRaceHistory();
+    renderGeneralRanking();
+    renderRelayRefOptions();
+    renderRelaySessions();
+  }
+
+  function renderClassSelector(){
+    const sel = document.getElementById('classSelect');
+    sel.innerHTML = '';
+    Object.keys(store.classes).forEach(id=>{
+      const o = document.createElement('option');
+      o.value = id; o.textContent = store.classes[id].name;
+      sel.appendChild(o);
+    });
+    sel.value = store.currentClassId;
+  }
+
+  document.getElementById('classSelect').addEventListener('change', function(){
+    saveData();
+    loadClass(this.value);
+  });
+
+  document.getElementById('btnNewClass').addEventListener('click', function(){
+    const name = prompt('Nom de la nouvelle classe :', 'Classe ' + (Object.keys(store.classes).length+1));
+    if(!name || !name.trim()) return;
+    saveData();
+    const id = 'c' + Date.now() + Math.random().toString(36).slice(2,6);
+    store.classes[id] = emptyClassData(name.trim());
+    loadClass(id);
+    persist();
+  });
+
+  document.getElementById('btnRenameClass').addEventListener('click', function(){
+    const c = store.classes[store.currentClassId];
+    const name = prompt('Nouveau nom de la classe :', c.name);
+    if(!name || !name.trim()) return;
+    c.name = name.trim();
+    renderClassSelector();
+    persist();
+  });
+
+  document.getElementById('btnDeleteClass').addEventListener('click', function(){
+    const ids = Object.keys(store.classes);
+    if(ids.length <= 1){ alert('Impossible de supprimer la dernière classe.'); return; }
+    const c = store.classes[store.currentClassId];
+    if(!confirm(`Supprimer la classe « ${c.name} » et toutes ses données ? Cette action est irréversible.`)) return;
+    delete store.classes[store.currentClassId];
+    const remaining = Object.keys(store.classes)[0];
+    loadClass(remaining);
+    persist();
+  });
+
+  // ---------- TABS ----------
+  document.getElementById('tabs').addEventListener('click', function(e){
+    const btn = e.target.closest('button[data-tab]');
+    if(!btn) return;
+    document.querySelectorAll('nav.tabs button').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('panel-'+btn.dataset.tab).classList.add('active');
+    if(btn.dataset.tab==='vitesse') renderTimeTable();
+    if(btn.dataset.tab==='handicap') renderRefDistanceOptions();
+    if(btn.dataset.tab==='tournoi'){ renderPointsTable(); renderTournoiRefOptions(); renderCurrentRace(); renderRaceHistory(); renderGeneralRanking(); }
+    if(btn.dataset.tab==='relais'){ renderRelayRefOptions(); renderRelaySessions(); }
+  });
+
+  // ---------- CSV IMPORT ----------
+  function parseCSV(text){
+    const lines = text.split(/\r?\n/).map(l=>l.trim()).filter(l=>l.length);
+    if(!lines.length) return [];
+    const delim = lines[0].indexOf(';') !== -1 ? ';' : ',';
+    const header = lines[0].split(delim).map(h=>h.trim().toLowerCase());
+    const idxPrenom = header.findIndex(h => h.includes('prenom') || h.includes('prénom'));
+    const idxNom = header.findIndex(h => h.includes('nom') && !h.includes('prenom') && !h.includes('prénom'));
+    const hasHeader = idxPrenom !== -1 || idxNom !== -1;
+    const dataLines = hasHeader ? lines.slice(1) : lines;
+    const names = [];
+    dataLines.forEach(line=>{
+      if(!line.trim()) return;
+      const cols = line.split(delim).map(c=>c.trim());
+      let name;
+      if(hasHeader){
+        if(idxPrenom!==-1 && idxNom!==-1) name = (cols[idxPrenom]||'') + ' ' + (cols[idxNom]||'');
+        else if(idxNom!==-1) name = cols[idxNom]||'';
+        else name = cols[idxPrenom]||'';
+      } else {
+        name = cols.join(' ');
+      }
+      name = name.replace(/\s+/g,' ').trim();
+      if(name) names.push(name);
+    });
+    return names;
+  }
+
+  function addStudents(names){
+    names.forEach(n=>{
+      students.push({id: nextId++, name: n, status:'disponible', raceCount:0, totalPoints:0});
+    });
+    renderStudentTable();
+    renderGeneralRanking();
+    renderTimeTable();
+    renderRelaySessions();
+    saveData();
+  }
+
+  document.getElementById('csvFile').addEventListener('change', function(e){
+    const file = e.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = function(ev){
+      const names = parseCSV(ev.target.result);
+      addStudents(names);
+    };
+    reader.readAsText(file, 'UTF-8');
+  });
+
+  document.getElementById('btnParseCsv').addEventListener('click', function(){
+    const text = document.getElementById('csvText').value;
+    if(!text.trim()) return;
+    const names = parseCSV(text);
+    addStudents(names);
+    document.getElementById('csvText').value = '';
+  });
+
+  document.getElementById('btnAddOne').addEventListener('click', function(){
+    const name = prompt("Prénom et nom de l'élève :");
+    if(name && name.trim()) addStudents([name.trim()]);
+  });
+
+  function renderStudentTable(){
+    const tbody = document.querySelector('#studentTable tbody');
+    tbody.innerHTML = '';
+    students.forEach(s=>{
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td>${escapeHtml(s.name)}</td><td></td><td class="center"></td>`;
+
+      const statusSel = document.createElement('select');
+      statusSel.className = 'status-select st-' + s.status;
+      statusSel.innerHTML = `
+        <option value="disponible">Disponible</option>
+        <option value="absent">Absent</option>
+        <option value="arret">Arrêt (blessure/fatigue)</option>`;
+      statusSel.value = s.status;
+      statusSel.addEventListener('change', function(){
+        s.status = this.value;
+        this.className = 'status-select st-' + s.status;
+        renderGeneralRanking();
+        saveData();
+      });
+      tr.children[1].appendChild(statusSel);
+
+      const delBtn = document.createElement('button');
+      delBtn.className = 'btn ghost';
+      delBtn.style.padding = '4px 9px';
+      delBtn.style.fontSize = '11px';
+      delBtn.textContent = '✕';
+      delBtn.addEventListener('click', ()=>{
+        students = students.filter(x=>x.id!==s.id);
+        Object.values(tests).forEach(t=>{ delete t[s.id]; });
+        renderStudentTable();
+        renderGeneralRanking();
+        renderTimeTable();
+        renderRelaySessions();
+        saveData();
+      });
+      tr.children[2].appendChild(delBtn);
+      tbody.appendChild(tr);
+    });
+    document.getElementById('countPill').textContent = students.length;
+    document.getElementById('studentEmpty').style.display = students.length ? 'none' : 'block';
+    document.getElementById('studentTable').style.display = students.length ? 'table' : 'none';
+  }
+
+  // ---------- VITESSE ----------
+  document.getElementById('testDistanceSelect').addEventListener('change', function(){
+    document.getElementById('customDistanceWrap').style.display = this.value==='custom' ? 'block' : 'none';
+    renderTimeTable();
+  });
+  document.getElementById('customDistance').addEventListener('input', renderTimeTable);
+
+  document.getElementById('testAttemptsInput').addEventListener('click', function(){ openKeypad(this, "Nombre d'essais", ''); });
+  document.getElementById('testAttemptsInput').addEventListener('focus', function(){ this.blur(); openKeypad(this, "Nombre d'essais", ''); });
+  document.getElementById('testAttemptsInput').addEventListener('input', function(){
+    let v = parseInt(this.value);
+    if(isNaN(v) || v<1) v = 1;
+    if(v>8) v = 8;
+    testAttempts = v;
+    this.value = v;
+    renderTimeTable();
+    saveData();
+  });
+
+  function renderTimeTable(){
+    const dist = currentTestDistance();
+    document.getElementById('testDistLabel').textContent = dist ? `(${dist} m)` : '';
+    const key = String(dist);
+    if(!tests[key]) tests[key] = {};
+    const tbody = document.querySelector('#timeTable tbody');
+    tbody.innerHTML = '';
+    document.getElementById('timeEmpty').style.display = students.length ? 'none' : 'block';
+    document.getElementById('timeTable').style.display = students.length ? 'table' : 'none';
+
+    const thead = document.querySelector('#timeTable thead tr');
+    let headHtml = '<th>Élève</th>';
+    for(let i=1;i<=testAttempts;i++) headHtml += `<th style="width:64px;">Essai ${i}</th>`;
+    headHtml += '<th class="right">Moyenne</th><th class="right">Vitesse</th>';
+    thead.innerHTML = headHtml;
+
+    students.forEach(s=>{
+      if(!tests[key][s.id]) tests[key][s.id] = [];
+      const arr = tests[key][s.id];
+      while(arr.length < testAttempts) arr.push(null);
+      if(arr.length > testAttempts) arr.length = testAttempts;
+
+      const tr = document.createElement('tr');
+      let rowHtml = `<td>${escapeHtml(s.name)}</td>`;
+      for(let i=0;i<testAttempts;i++){
+        const v = arr[i];
+        rowHtml += `<td><input type="text" inputmode="decimal" readonly class="num time-attempt-input" value="${v!==null&&v!==undefined?v:''}" data-id="${s.id}" data-attempt="${i}" placeholder="—"></td>`;
+      }
+      rowHtml += `<td class="right num" id="avg-${s.id}">—</td><td class="right num" id="speed-${s.id}">—</td>`;
+      tr.innerHTML = rowHtml;
+      tbody.appendChild(tr);
+
+      tr.querySelectorAll('.time-attempt-input').forEach(input=>{
+        const attemptIdx = parseInt(input.dataset.attempt);
+        const label = `${s.name} — essai ${attemptIdx+1} (${dist} m)`;
+        input.addEventListener('click', function(){ openKeypad(this, label, 's'); });
+        input.addEventListener('focus', function(){ this.blur(); openKeypad(this, label, 's'); });
+        input.addEventListener('input', function(){
+          const v = parseFloat(this.value);
+          tests[key][s.id][attemptIdx] = (!isNaN(v) && v>0) ? v : null;
+          updateSpeedCell(s.id, dist);
+          saveData();
+        });
+      });
+      updateSpeedCell(s.id, dist);
+    });
+  }
+
+  function updateSpeedCell(id, dist){
+    const key = String(dist);
+    const avgCell = document.getElementById('avg-'+id);
+    const speedCell = document.getElementById('speed-'+id);
+    if(!speedCell) return;
+    const arr = tests[key] ? tests[key][id] : undefined;
+    const avg = averageTime(arr);
+    if(avgCell) avgCell.textContent = avg!==null ? fmt(avg,2)+' s' : '—';
+    const sp = speedFor(dist, avg);
+    speedCell.textContent = sp ? `${fmt(sp.kmh,2)} km/h` : '—';
+  }
+
+  // ---------- CLAVIER NUMÉRIQUE ----------
+  let activeKeypadInput = null;
+  let keypadBuffer = '';
+
+  function openKeypad(inputEl, label, unit){
+    activeKeypadInput = inputEl;
+    keypadBuffer = (inputEl.value || '').toString().replace('.', ',');
+    document.getElementById('keypadTitle').textContent = label || 'Valeur';
+    document.getElementById('keypadUnit').textContent = unit !== undefined ? unit : 's';
+    renderKeypadDisplay();
+    document.getElementById('keypadOverlay').classList.add('open');
+  }
+
+  function closeKeypad(){
+    document.getElementById('keypadOverlay').classList.remove('open');
+    activeKeypadInput = null;
+    keypadBuffer = '';
+  }
+
+  function renderKeypadDisplay(){
+    document.getElementById('keypadDisplay').textContent = keypadBuffer || '0';
+  }
+
+  document.querySelectorAll('.keypad-grid button').forEach(btn=>{
+    btn.addEventListener('click', function(){
+      const key = this.dataset.key;
+      if(key === '⌫'){
+        keypadBuffer = keypadBuffer.slice(0, -1);
+      } else if(key === 'C'){
+        keypadBuffer = '';
+      } else if(key === '±'){
+        keypadBuffer = keypadBuffer.startsWith('-') ? keypadBuffer.slice(1) : ('-' + keypadBuffer);
+      } else if(key === ','){
+        if(!keypadBuffer.includes(',')) keypadBuffer += (keypadBuffer===''? '0,' : ',');
+      } else {
+        if(keypadBuffer.replace('-','').length < 7) keypadBuffer += key;
+      }
+      renderKeypadDisplay();
+    });
+  });
+
+  document.getElementById('keypadCancel').addEventListener('click', closeKeypad);
+
+  document.getElementById('keypadOverlay').addEventListener('click', function(e){
+    if(e.target === this) closeKeypad();
+  });
+
+  document.addEventListener('keydown', function(e){
+    if(e.key !== 'Escape') return;
+    if(document.getElementById('keypadOverlay').classList.contains('open')) closeKeypad();
+    if(document.getElementById('settingsOverlay').classList.contains('open')) document.getElementById('settingsOverlay').classList.remove('open');
+    if(document.getElementById('relaySettingsOverlay').classList.contains('open')) document.getElementById('relaySettingsOverlay').classList.remove('open');
+  });
+
+  document.getElementById('keypadValidate').addEventListener('click', function(){
+    if(!activeKeypadInput) return;
+    const raw = keypadBuffer.replace(',', '.');
+    if(raw === '' || raw === '-'){
+      activeKeypadInput.value = '';
+    } else {
+      const num = parseFloat(raw);
+      if(isNaN(num)){
+        alert('Valeur invalide.');
+        return;
+      }
+      activeKeypadInput.value = raw;
+    }
+    activeKeypadInput.dispatchEvent(new Event('input', {bubbles:true}));
+    closeKeypad();
+  });
+
+  // ---------- HANDICAP (calculateur simple) ----------
+  function renderRefDistanceOptions(){
+    const sel = document.getElementById('refDistanceSelect');
+    const opts = distancesWithData();
+    sel.innerHTML = '';
+    if(!opts.length){
+      sel.innerHTML = '<option value="">Aucune mesure disponible</option>';
+      document.getElementById('btnCalcHandicap').disabled = true;
+      return;
+    }
+    document.getElementById('btnCalcHandicap').disabled = false;
+    opts.forEach(d=>{
+      const o = document.createElement('option');
+      o.value = d; o.textContent = d + ' m';
+      sel.appendChild(o);
+    });
+  }
+
+  document.getElementById('btnCalcHandicap').addEventListener('click', function(){
+    const refDist = parseFloat(document.getElementById('refDistanceSelect').value);
+    const raceDist = parseFloat(document.getElementById('raceDistance').value);
+    if(!refDist || !raceDist || raceDist<=0){
+      alert("Choisissez une distance de référence et une distance de course valides.");
+      return;
+    }
+    const key = String(refDist);
+    const timeMap = tests[key] || {};
+
+    const rows = students.map(s=>{
+      const avg = averageTime(timeMap[s.id]);
+      const sp = speedFor(refDist, avg);
+      return { id:s.id, name:s.name, speedKmh: sp?sp.kmh:null, speedMs: sp?sp.ms:null };
+    }).filter(r => r.speedMs !== null);
+
+    if(rows.length < 2){
+      alert("Il faut au moins deux élèves avec un temps mesuré sur cette distance.");
+      return;
+    }
+
+    const vmax = Math.max(...rows.map(r=>r.speedMs));
+    rows.forEach(r=>{
+      r.distanceToRun = raceDist * (r.speedMs / vmax);
+      r.advance = raceDist - r.distanceToRun;
+    });
+
+    rows.sort((a,b)=> b.advance - a.advance);
+
+    lastResults = { refDist, raceDist, rows };
+    renderResults();
+    document.querySelectorAll('nav.tabs button').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+    document.querySelector('button[data-tab="resultats"]').classList.add('active');
+    document.getElementById('panel-resultats').classList.add('active');
+  });
+
+  function renderResults(){
+    if(!lastResults) return;
+    document.getElementById('resultsEmpty').style.display = 'none';
+    document.getElementById('resultsContent').style.display = 'block';
+
+    const { raceDist, rows } = lastResults;
+
+    const laneDiagram = document.getElementById('laneDiagram');
+    laneDiagram.innerHTML = '';
+    rows.forEach(r=>{
+      const lane = document.createElement('div');
+      lane.className = 'lane';
+      const startPct = (r.advance / raceDist) * 100;
+      const isLeader = r.advance === 0;
+      lane.innerHTML = `<div class="marker${isLeader?' leader':''}" style="left:${startPct.toFixed(2)}%;"></div>
+                         <div class="name" style="left:calc(${startPct.toFixed(2)}% + 8px);">${escapeHtml(r.name)}</div>`;
+      laneDiagram.appendChild(lane);
+    });
+
+    const tbody = document.querySelector('#resultsTable tbody');
+    tbody.innerHTML = '';
+    rows.forEach(r=>{
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${escapeHtml(r.name)}</td>
+        <td class="right num">${fmt(r.speedKmh,2)} km/h</td>
+        <td class="right num">${fmt(r.distanceToRun,1)} m</td>
+        <td class="right num">${ r.advance>0.05 ? '+ '+fmt(r.advance,1)+' m' : '— (part sur la ligne)' }</td>`;
+      tbody.appendChild(tr);
+    });
+  }
+
+  document.getElementById('btnExportCsv').addEventListener('click', function(){
+    if(!lastResults){ alert("Aucun résultat à exporter."); return; }
+    let csv = "Nom;Vitesse test (km/h);Distance a parcourir (m);Avance (m)\n";
+    lastResults.rows.forEach(r=>{
+      csv += `${r.name};${fmt(r.speedKmh,2)};${fmt(r.distanceToRun,1)};${fmt(r.advance,1)}\n`;
+    });
+    const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'course_handicap_resultats.csv';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  });
+
+  document.getElementById('btnPrint').addEventListener('click', function(){
+    window.print();
+  });
+
+  // ---------- TOURNOI ----------
+  function defaultPointsForRank(rank){
+    const base = [10,8,6,5,4,3,2,1];
+    return rank<=base.length ? base[rank-1] : 0;
+  }
+
+  function ensurePointsConfig(n){
+    for(let r=1;r<=n;r++){
+      if(pointsConfig[r]===undefined) pointsConfig[r] = defaultPointsForRank(r);
+    }
+  }
+
+  function ordinalLabel(r){ return r===1 ? '1er' : r+'e'; }
+
+  function renderPointsTable(){
+    const n = Math.max(2, parseInt(document.getElementById('runnersPerRace').value)||4);
+    ensurePointsConfig(n);
+    const wrap = document.getElementById('pointsTableWrap');
+    let html = '<table><thead><tr>';
+    for(let r=1;r<=n;r++) html += `<th class="center">${ordinalLabel(r)}</th>`;
+    html += '</tr></thead><tbody><tr>';
+    for(let r=1;r<=n;r++){
+      html += `<td><input type="text" inputmode="numeric" readonly class="num points-input" data-rank="${r}" value="${pointsConfig[r]}" style="width:52px;"></td>`;
+    }
+    html += '</tr></tbody></table>';
+    wrap.innerHTML = html;
+    wrap.querySelectorAll('.points-input').forEach(inp=>{
+      const r = parseInt(inp.dataset.rank);
+      inp.addEventListener('click', function(){ openKeypad(this, `Points — ${ordinalLabel(r)}`, 'pts'); });
+      inp.addEventListener('focus', function(){ this.blur(); openKeypad(this, `Points — ${ordinalLabel(r)}`, 'pts'); });
+      inp.addEventListener('input', function(){
+        const rr = parseInt(this.dataset.rank);
+        const v = parseInt(this.value);
+        pointsConfig[rr] = isNaN(v) ? 0 : v;
+        saveData();
+      });
+    });
+  }
+
+  document.getElementById('runnersPerRace').addEventListener('input', function(){ renderPointsTable(); saveData(); });
+  document.getElementById('runnersPerRace').addEventListener('click', function(){ openKeypad(this, 'Coureurs par course', ''); });
+  document.getElementById('runnersPerRace').addEventListener('focus', function(){ this.blur(); openKeypad(this, 'Coureurs par course', ''); });
+  document.getElementById('tournoiRaceDistance').addEventListener('click', function(){ openKeypad(this, 'Distance de course', 'm'); });
+  document.getElementById('tournoiRaceDistance').addEventListener('focus', function(){ this.blur(); openKeypad(this, 'Distance de course', 'm'); });
+  document.getElementById('tournoiRaceDistance').addEventListener('input', saveData);
+  document.getElementById('tournoiRefDistance').addEventListener('change', saveData);
+
+  function eligibleStudents(){
+    return students.filter(s=> s.status==='disponible');
+  }
+
+  function pickBalancedGroup(pool, n){
+    const arr = shuffle(pool.slice());
+    arr.sort((a,b)=> a.raceCount - b.raceCount);
+    return arr.slice(0, Math.min(n, arr.length));
+  }
+
+  function pickLevelGroup(pool, n){
+    if(!pool.length) return [];
+    const byRank = pool.slice().sort((a,b)=> b.totalPoints - a.totalPoints);
+    const worstPoints = byRank[byRank.length-1].totalPoints;
+    let candidates = shuffle(byRank.filter(s=>s.totalPoints===worstPoints).slice());
+    candidates.sort((a,b)=> a.raceCount - b.raceCount);
+    const anchor = candidates[0];
+    const anchorIdx = byRank.findIndex(s=>s.id===anchor.id);
+    const withDist = byRank.map((s,idx)=>({ s, dist: Math.abs(idx-anchorIdx) }));
+    withDist.sort((a,b)=>{
+      if(a.dist!==b.dist) return a.dist-b.dist;
+      if(a.s.raceCount!==b.s.raceCount) return a.s.raceCount-b.s.raceCount;
+      return Math.random()-0.5;
+    });
+    return withDist.slice(0, Math.min(n, withDist.length)).map(x=>x.s);
+  }
+
+  function renderTournoiRefOptions(){
+    const sel = document.getElementById('tournoiRefDistance');
+    const opts = distancesWithData();
+    const prev = sel.value;
+    sel.innerHTML = '';
+    if(!opts.length){
+      sel.innerHTML = '<option value="">Aucune mesure</option>';
+      return;
+    }
+    opts.forEach(d=>{
+      const o = document.createElement('option');
+      o.value = d; o.textContent = d + ' m';
+      sel.appendChild(o);
+    });
+    if(opts.map(String).includes(prev)) sel.value = prev;
+  }
+
+  function computeHandicapForGroup(group){
+    const refDist = parseFloat(document.getElementById('tournoiRefDistance').value);
+    const raceDist = parseFloat(document.getElementById('tournoiRaceDistance').value);
+    if(!refDist || !raceDist) return null;
+    const timeMap = tests[String(refDist)] || {};
+    const speeds = {};
+    const missing = [];
+    group.forEach(s=>{
+      const avg = averageTime(timeMap[s.id]);
+      const sp = speedFor(refDist, avg);
+      if(sp) speeds[s.id] = sp; else missing.push(s.name);
+    });
+    const ids = Object.keys(speeds);
+    if(ids.length < 2) return { raceDist, refDist, rows: null, missing: group.map(s=>s.name) };
+    const vmax = Math.max(...ids.map(id=>speeds[id].ms));
+    const rows = ids.map(id=>{
+      const sp = speeds[id];
+      const distanceToRun = raceDist * (sp.ms / vmax);
+      return { id:Number(id), speedKmh: sp.kmh, distanceToRun, advance: raceDist - distanceToRun };
+    }).sort((a,b)=> b.advance - a.advance);
+    return { raceDist, refDist, rows, missing };
+  }
+
+  function createRace(group, type){
+    const race = {
+      id: raceNextId++,
+      participants: group.map(s=>s.id),
+      type: type,
+      createdAt: Date.now(),
+      ranks: {},
+      pointsAwarded: {},
+      completed: false,
+      handicap: computeHandicapForGroup(group)
+    };
+    races.unshift(race);
+    renderCurrentRace();
+    renderRaceHistory();
+    saveData();
+  }
+
+  function handleRandomRace(){
+    const n = Math.max(2, parseInt(document.getElementById('runnersPerRace').value)||4);
+    const pool = eligibleStudents();
+    if(pool.length < 2){ alert("Il faut au moins deux élèves disponibles."); return; }
+    const group = shuffle(pickBalancedGroup(pool, n));
+    createRace(group, 'aleatoire');
+  }
+
+  function handleLevelRace(){
+    const n = Math.max(2, parseInt(document.getElementById('runnersPerRace').value)||4);
+    const pool = eligibleStudents();
+    if(pool.length < 2){ alert("Il faut au moins deux élèves disponibles."); return; }
+    const group = shuffle(pickLevelGroup(pool, n));
+    createRace(group, 'niveau');
+  }
+
+  function raceNumberOf(race){
+    const idx = races.findIndex(r=>r.id===race.id);
+    return races.length - idx;
+  }
+
+  function buildRaceCardHTML(race, num){
+    const typeLabel = race.type==='aleatoire' ? '🎲 Aléatoire' : '📊 Niveau';
+    const typeBadgeClass = race.type==='aleatoire' ? 'type-aleatoire' : 'type-niveau';
+
+    let head = `<div class="race-head">
+      <div class="title">Course ${num}</div>
+      <div style="display:flex; gap:6px;">
+        <span class="badge ${typeBadgeClass}">${typeLabel}</span>
+        ${race.completed ? '<span class="badge done">Validé ✓</span>' : ''}
+      </div>
+    </div>`;
+
+    let rowsHtml = '<div class="race-participants">';
+    race.participants.forEach(pid=>{
+      const st = studentById(pid);
+      const name = st ? escapeHtml(st.name) : '(élève supprimé)';
+      const currentRank = race.ranks[pid] || '';
+      const pts = race.completed ? (race.pointsAwarded[pid] !== undefined ? race.pointsAwarded[pid] : 0) : null;
+
+      if(race.completed){
+        rowsHtml += `<div class="race-participant">
+            <span class="pname">${name}</span>
+            <span style="display:flex; align-items:center; gap:10px;">
+              <span class="pts-earned">${pts} pt${pts>1?'s':''}</span> <span class="num">Place ${currentRank}</span>
+            </span>
+          </div>`;
+      } else {
+        let btns = '';
+        for(let r=1; r<=race.participants.length; r++){
+          const selected = race.ranks[pid] === r;
+          const takenByOther = Object.keys(race.ranks).some(k => Number(k)!==pid && race.ranks[k]===r);
+          const ownOtherRankTaken = race.ranks[pid] !== undefined && race.ranks[pid] !== r;
+          const disabled = takenByOther || ownOtherRankTaken;
+          btns += `<button type="button" class="rank-btn${selected?' selected':''}" ${disabled?'disabled':''} data-race="${race.id}" data-student="${pid}" data-rank="${r}">${ordinalLabel(r)}</button>`;
+        }
+        rowsHtml += `<div class="race-participant stacked">
+            <span class="pname">${name}</span>
+            <div class="rank-btns">${btns}</div>
+          </div>`;
+      }
+    });
+    rowsHtml += '</div>';
+
+    let handicapHtml = '';
+    if(race.handicap){
+      if(race.handicap.rows){
+        handicapHtml += `<div style="margin-top:10px; padding-top:10px; border-top:1px dashed var(--line);">
+          <div style="font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:.03em; color:var(--ink-soft); margin-bottom:6px;">Départs handicap — course de ${race.handicap.raceDist} m (vitesse sur ${race.handicap.refDist} m)</div>`;
+        race.handicap.rows.forEach(r=>{
+          const st = studentById(r.id);
+          const name = st ? escapeHtml(st.name) : '?';
+          const isLeader = r.advance <= 0.05;
+          handicapHtml += `<div style="display:flex; justify-content:space-between; font-size:12.5px; padding:2px 0;">
+              <span>${isLeader ? '🏁 ' : ''}${name}</span>
+              <span class="num">${isLeader
+                ? `part au départ — ${fmt(race.handicap.raceDist,0)} m à courir (${fmt(r.speedKmh,1)} km/h, le plus rapide)`
+                : `part à ${fmt(r.advance,1)} m devant (${fmt(r.distanceToRun,1)} m à courir)`}</span>
+            </div>`;
+        });
+        if(race.handicap.missing.length){
+          handicapHtml += `<div class="muted" style="font-size:11px; margin-top:4px;">Vitesse non mesurée pour : ${race.handicap.missing.map(escapeHtml).join(', ')}</div>`;
+        }
+        handicapHtml += `</div>`;
+      } else {
+        handicapHtml += `<div class="muted" style="font-size:11.5px; margin-top:8px; padding-top:8px; border-top:1px dashed var(--line);">Pas assez de vitesses mesurées pour calculer le handicap de cette course (onglet Vitesse).</div>`;
+      }
+    }
+
+    let actions = `<div class="race-actions">
+        ${race.completed
+          ? `<button class="btn ghost" data-action="edit" data-race="${race.id}">Modifier</button>`
+          : `<button class="btn" data-action="validate" data-race="${race.id}">Valider le classement</button>`
+        }
+        <button class="btn ghost" data-action="delete" data-race="${race.id}">Supprimer</button>
+      </div>`;
+
+    return head + rowsHtml + handicapHtml + actions;
+  }
+
+  function wireRaceCard(root){
+    root.querySelectorAll('button[data-action="validate"], button[data-action="edit"]').forEach(btn=>{
+      btn.addEventListener('click', ()=> validateRace(parseInt(btn.dataset.race)));
+    });
+    root.querySelectorAll('button[data-action="delete"]').forEach(btn=>{
+      btn.addEventListener('click', ()=> deleteRace(parseInt(btn.dataset.race)));
+    });
+    root.querySelectorAll('.rank-btn').forEach(btn=>{
+      btn.addEventListener('click', function(){
+        if(this.disabled) return;
+        toggleRank(parseInt(this.dataset.race), parseInt(this.dataset.student), parseInt(this.dataset.rank));
+      });
+    });
+  }
+
+  function toggleRank(raceId, studentId, rank){
+    const race = races.find(r=>r.id===raceId);
+    if(!race) return;
+    if(race.ranks[studentId] === rank){
+      delete race.ranks[studentId];
+    } else {
+      race.ranks[studentId] = rank;
+    }
+    renderCurrentRace();
+    saveData();
+  }
+
+  function renderCurrentRace(){
+    const area = document.getElementById('currentRaceArea');
+    const current = races.find(r=>!r.completed);
+    if(!current){
+      area.innerHTML = `
+        <p class="hint" style="margin-top:0;">Prêt pour une nouvelle course. Les élèves absents ou en arrêt ne sont jamais sélectionnés ; la sélection équilibre le nombre de courses de chacun.</p>
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+          <button class="btn" id="btnRandomRace">🎲 Course aléatoire</button>
+          <button class="btn secondary" id="btnLevelRace">📊 Course par niveau (classement proche)</button>
+        </div>`;
+      document.getElementById('btnRandomRace').addEventListener('click', handleRandomRace);
+      document.getElementById('btnLevelRace').addEventListener('click', handleLevelRace);
+    } else {
+      const card = document.createElement('div');
+      card.className = 'race-card' + (current.completed ? ' done' : '');
+      card.innerHTML = buildRaceCardHTML(current, raceNumberOf(current));
+      area.innerHTML = '';
+      area.appendChild(card);
+      wireRaceCard(area);
+    }
+  }
+
+  function renderRaceHistory(){
+    const list = document.getElementById('racesList');
+    list.innerHTML = '';
+    const completedRaces = races.filter(r=>r.completed);
+    document.getElementById('raceCountPill').textContent = completedRaces.length;
+    document.getElementById('racesEmpty').style.display = completedRaces.length ? 'none' : 'block';
+
+    races.forEach((race, idx)=>{
+      if(!race.completed) return;
+      const num = races.length - idx;
+      const card = document.createElement('div');
+      card.className = 'race-card done';
+      card.innerHTML = buildRaceCardHTML(race, num);
+      list.appendChild(card);
+    });
+    wireRaceCard(list);
+  }
+
+  function validateRace(raceId){
+    const race = races.find(r=>r.id===raceId);
+    if(!race) return;
+
+    if(race.completed){
+      race.completed = false;
+      renderCurrentRace();
+      renderRaceHistory();
+      saveData();
+      return;
+    }
+
+    const missing = race.participants.filter(pid => race.ranks[pid] === undefined);
+    if(missing.length){
+      alert('Attribuez une place à tous les coureurs avant de valider.');
+      return;
+    }
+    const ranks = race.ranks;
+
+    if(Object.keys(race.pointsAwarded).length){
+      race.participants.forEach(pid=>{
+        const st = studentById(pid);
+        if(st) st.totalPoints -= (race.pointsAwarded[pid]||0);
+      });
+    } else {
+      race.participants.forEach(pid=>{
+        const st = studentById(pid);
+        if(st) st.raceCount += 1;
+      });
+    }
+
+    const awarded = {};
+    race.participants.forEach(pid=>{
+      const rank = ranks[pid];
+      const pts = pointsConfig[rank] !== undefined ? pointsConfig[rank] : 0;
+      awarded[pid] = pts;
+      const st = studentById(pid);
+      if(st) st.totalPoints += pts;
+    });
+
+    race.ranks = ranks;
+    race.pointsAwarded = awarded;
+    race.completed = true;
+
+    renderCurrentRace();
+    renderRaceHistory();
+    renderGeneralRanking();
+    renderStudentTable();
+    saveData();
+  }
+
+  function deleteRace(raceId){
+    const race = races.find(r=>r.id===raceId);
+    if(!race) return;
+    if(!confirm('Supprimer cette course ?')) return;
+    if(race.completed){
+      race.participants.forEach(pid=>{
+        const st = studentById(pid);
+        if(st){
+          st.totalPoints -= (race.pointsAwarded[pid]||0);
+          st.raceCount -= 1;
+        }
+      });
+    }
+    races = races.filter(r=>r.id!==raceId);
+    renderCurrentRace();
+    renderRaceHistory();
+    renderGeneralRanking();
+    renderStudentTable();
+    saveData();
+  }
+
+  function renderGeneralRanking(){
+    const tbody = document.querySelector('#generalTable tbody');
+    tbody.innerHTML = '';
+    document.getElementById('generalEmpty').style.display = students.length ? 'none' : 'block';
+    document.getElementById('generalTable').style.display = students.length ? 'table' : 'none';
+
+    const sorted = students.slice().sort((a,b)=> b.totalPoints - a.totalPoints || a.name.localeCompare(b.name));
+    const statusLabel = { disponible:'—', absent:'Absent', arret:'Arrêt (blessure/fatigue)' };
+
+    sorted.forEach((s, idx)=>{
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td class="rangcell">${idx+1}</td>
+        <td>${escapeHtml(s.name)}</td>
+        <td class="right num">${s.totalPoints}</td>
+        <td class="right num">${s.raceCount}</td>
+        <td class="muted">${statusLabel[s.status]}</td>`;
+      tbody.appendChild(tr);
+    });
+  }
+
+  document.getElementById('btnOpenSettings').addEventListener('click', function(){
+    document.getElementById('settingsOverlay').classList.add('open');
+  });
+  document.getElementById('settingsClose').addEventListener('click', function(){
+    document.getElementById('settingsOverlay').classList.remove('open');
+  });
+  document.getElementById('settingsOverlay').addEventListener('click', function(e){
+    if(e.target === this) this.classList.remove('open');
+  });
+
+  // ---------- RELAIS ----------
+  const relayLevels = [
+    { key:'bad', emoji:'🔴', label:'À travailler' },
+    { key:'medium', emoji:'🟠', label:'Moyen' },
+    { key:'good', emoji:'🟢', label:'Bien' },
+    { key:'best', emoji:'🟩', label:'Excellent' }
+  ];
+
+  function classifyRelay(diff){
+    if(diff <= relayBareme.t1) return relayLevels[3];
+    if(diff <= relayBareme.t2) return relayLevels[2];
+    if(diff <= relayBareme.t3) return relayLevels[1];
+    return relayLevels[0];
+  }
+
+  function renderRelayRefOptions(){
+    const sel = document.getElementById('relayRefDistance');
+    const opts = distancesWithData();
+    const prev = sel.value;
+    sel.innerHTML = '';
+    if(!opts.length){
+      sel.innerHTML = '<option value="">Aucune mesure</option>';
+      return;
+    }
+    opts.forEach(d=>{
+      const o = document.createElement('option');
+      o.value = d; o.textContent = d + ' m';
+      sel.appendChild(o);
+    });
+    if(opts.map(String).includes(prev)) sel.value = prev;
+  }
+
+  document.getElementById('relayRefDistance').addEventListener('change', function(){ renderRelaySessions(); saveData(); });
+
+  document.getElementById('btnOpenRelaySettings').addEventListener('click', function(){
+    document.getElementById('relaySettingsOverlay').classList.add('open');
+  });
+  document.getElementById('relaySettingsClose').addEventListener('click', function(){
+    document.getElementById('relaySettingsOverlay').classList.remove('open');
+  });
+  document.getElementById('relaySettingsOverlay').addEventListener('click', function(e){
+    if(e.target === this) this.classList.remove('open');
+  });
+
+  function wireRelayThreshold(id, key, unit){
+    const el = document.getElementById(id);
+    el.addEventListener('click', function(){ openKeypad(this, this.previousElementSibling ? this.previousElementSibling.textContent : 'Seuil', unit); });
+    el.addEventListener('focus', function(){ this.blur(); openKeypad(this, 'Seuil', unit); });
+    el.addEventListener('input', function(){
+      const v = parseFloat((this.value||'0').replace(',', '.'));
+      relayBareme[key] = isNaN(v) ? 0 : v;
+      renderRelaySessions();
+      saveData();
+    });
+  }
+  wireRelayThreshold('relayThreshold1', 't1', 's');
+  wireRelayThreshold('relayThreshold2', 't2', 's');
+  wireRelayThreshold('relayThreshold3', 't3', 's');
+
+  document.getElementById('btnNewRelaySession').addEventListener('click', function(){
+    const name = 'Séance ' + (relaySessions.length+1);
+    const newSession = { id:'s'+(relaySessionNextId++), name, groups:[], activeFilter:null };
+    relaySessions.push(newSession);
+    relaySessionFilter = newSession.id;
+    renderRelaySessions();
+    saveData();
+  });
+
+  const groupColorPalette = ['#B8271F','#1E6F9F','#2C6E49','#8B5CF6','#C77D02','#0E7C7B','#A63A50','#4B5563','#B8860B','#6B21A8'];
+  function groupColor(num){ return groupColorPalette[(num-1) % groupColorPalette.length]; }
+
+  function addRelayGroup(sessionId, size){
+    const session = relaySessions.find(s=>s.id===sessionId);
+    if(!session) return;
+    session.groups.push({ id:'g'+(relayGroupNextId++), size, playerIds:new Array(size).fill(null), actualTimes:{} });
+    renderRelaySessions();
+    saveData();
+  }
+
+  function buildRelayLegs(group, refDist){
+    const n = group.size;
+    const timeMap = tests[String(refDist)] || {};
+    const legs = [];
+    for(let i=0;i<n;i++){
+      const donneurId = group.playerIds[i];
+      const receveurId = group.playerIds[(i+1)%n];
+      const others = group.playerIds.filter(id => id!==donneurId && id!==receveurId);
+      const tD = averageTime(timeMap[donneurId]);
+      const tR = averageTime(timeMap[receveurId]);
+      const objectif = (tD!==null && tR!==null) ? tD+tR : null;
+      legs.push({ donneurId, receveurId, others, objectif });
+    }
+    return legs;
+  }
+
+  function buildRelayGroupHTML(session, group, num){
+    const refDist = document.getElementById('relayRefDistance').value;
+    const color = groupColor(num);
+    let html = `<div class="relay-group" style="--gcolor:${color}; border-left-color:${color};" data-group="${group.id}">
+       <div class="relay-group-head">
+         <span class="relay-group-title"><span class="relay-group-badge">${num}</span>Groupe ${num} <span class="muted" style="text-transform:none; font-weight:400; font-size:11px;">(${group.size} coureurs)</span></span>
+         <button type="button" class="btn ghost" data-action="delete-group" data-session="${session.id}" data-group="${group.id}" style="padding:3px 9px; font-size:11px;">✕</button>
+       </div>
+       <div class="relay-selects">`;
+    for(let i=0;i<group.size;i++){
+      html += `<select class="relay-player-select" data-session="${session.id}" data-group="${group.id}" data-slot="${i}">
+         <option value="">Élève ${i+1}…</option>
+         ${students.map(s=>`<option value="${s.id}" ${group.playerIds[i]===s.id?'selected':''}>${escapeHtml(s.name)}</option>`).join('')}
+       </select>`;
+    }
+    html += `</div>`;
+
+    const allChosen = group.playerIds.every(id=>id!==null && id!==undefined && id!=='');
+    const allDistinct = new Set(group.playerIds).size === group.size;
+
+    if(allChosen && allDistinct && refDist){
+      const legs = buildRelayLegs(group, refDist);
+      legs.forEach((leg, idx)=>{
+        const donneur = studentById(leg.donneurId);
+        const receveur = studentById(leg.receveurId);
+        const chronoNames = leg.others.map(id=>{ const st = studentById(id); return st?escapeHtml(st.name):'?'; }).join(', ');
+        const objectifTxt = leg.objectif!==null ? fmt(leg.objectif,2)+' s' : '—';
+        const actualVal = group.actualTimes && group.actualTimes[idx]!==undefined ? group.actualTimes[idx] : '';
+        let resultHtml = '<span class="muted">en attente</span>';
+        if(leg.objectif!==null && actualVal!==''){
+          const diff = parseFloat(actualVal) - leg.objectif;
+          const level = classifyRelay(diff);
+          resultHtml = `<span class="relay-leg-result">${level.emoji} ${level.label}</span> <span class="muted">(${diff>=0?'+':''}${fmt(diff,2)} s)</span>`;
+        }
+        html += `<div class="relay-leg">
+            <div class="relay-leg-head">
+              <span>Relais ${idx+1}</span>
+              <span>Chrono : ${chronoNames || '—'}</span>
+            </div>
+            <div class="relay-leg-players">${donneur?escapeHtml(donneur.name):'?'}<span class="arrow">→</span>${receveur?escapeHtml(receveur.name):'?'}</div>
+            <div class="relay-leg-meta">
+              <span>Objectif <strong class="num">${objectifTxt}</strong></span>
+              <span>Réalisé <input type="text" inputmode="decimal" readonly class="num relay-time-input" value="${actualVal}" data-session="${session.id}" data-group="${group.id}" data-leg="${idx}" placeholder="—"></span>
+              <span>${resultHtml}</span>
+            </div>
+          </div>`;
+      });
+    } else if(!refDist){
+      html += `<p class="muted" style="font-size:12px; margin-top:8px;">Choisissez une distance de référence dans les réglages (⚙️) pour générer la rotation.</p>`;
+    } else {
+      html += `<p class="muted" style="font-size:12px; margin-top:8px;">Sélectionnez ${group.size} élèves différents pour générer la rotation.</p>`;
+    }
+    html += `</div>`;
+    return html;
+  }
+
+  function buildSessionCardHTML(session){
+    if(session.activeFilter === undefined) session.activeFilter = null;
+    let html = `<div class="card relay-session" data-session="${session.id}">
+      <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:10px; flex-wrap:wrap;">
+        <input type="text" class="relay-session-name" value="${escapeHtml(session.name)}" data-session="${session.id}">
+        <button type="button" class="btn ghost" data-action="delete-session" data-session="${session.id}" style="padding:5px 10px; font-size:11px;">Supprimer la séance</button>
+      </div>
+      <div style="display:flex; gap:8px; margin-bottom:14px; flex-wrap:wrap;">
+        <button type="button" class="btn secondary" data-action="add-group3" data-session="${session.id}" style="font-size:12px; padding:7px 12px;">+ Groupe de 3</button>
+        <button type="button" class="btn secondary" data-action="add-group4" data-session="${session.id}" style="font-size:12px; padding:7px 12px;">+ Groupe de 4</button>
+      </div>`;
+
+    const numberedGroups = session.groups.map((g, idx) => ({ g, num: idx+1 }));
+
+    if(numberedGroups.length){
+      html += `<div class="relay-filter-bar">
+        <button type="button" class="relay-filter-btn${!session.activeFilter?' active':''}" data-action="filter" data-session="${session.id}" data-filter="">Tous (${numberedGroups.length})</button>
+        ${numberedGroups.map(({g,num})=>`<button type="button" class="relay-filter-btn${session.activeFilter===g.id?' active':''}" style="--gcolor:${groupColor(num)}" data-action="filter" data-session="${session.id}" data-filter="${g.id}"><span class="dot"></span>Groupe ${num}</button>`).join('')}
+      </div>`;
+    }
+
+    html += `<div class="relay-groups-grid">`;
+    const visible = session.activeFilter ? numberedGroups.filter(({g})=>g.id===session.activeFilter) : numberedGroups;
+    visible.forEach(({g,num})=> html += buildRelayGroupHTML(session, g, num));
+    if(!numberedGroups.length) html += `<p class="muted" style="font-size:12px;">Aucun groupe pour l'instant.</p>`;
+    html += `</div>
+      <div class="relay-legend">
+        <span>🟩 Excellent</span><span>🟢 Bien</span><span>🟠 Moyen</span><span>🔴 À travailler</span>
+      </div>
+    </div>`;
+    return html;
+  }
+
+  function renderRelaySessions(){
+    const filterBar = document.getElementById('relaySessionFilterBar');
+    const list = document.getElementById('relaySessionsList');
+    list.innerHTML = '';
+
+    if(relaySessions.length > 1){
+      filterBar.style.display = 'flex';
+      filterBar.innerHTML = `
+        <button type="button" class="relay-filter-btn${!relaySessionFilter?' active':''}" data-action="session-filter" data-session="">Toutes (${relaySessions.length})</button>
+        ${relaySessions.map(s=>`<button type="button" class="relay-filter-btn${relaySessionFilter===s.id?' active':''}" data-action="session-filter" data-session="${s.id}">${escapeHtml(s.name)}</button>`).join('')}
+      `;
+      filterBar.querySelectorAll('[data-action="session-filter"]').forEach(btn=>{
+        btn.addEventListener('click', function(){
+          relaySessionFilter = this.dataset.session || null;
+          renderRelaySessions();
+          saveData();
+        });
+      });
+    } else {
+      filterBar.style.display = 'none';
+      filterBar.innerHTML = '';
+    }
+
+    document.getElementById('relayEmpty').style.display = relaySessions.length ? 'none' : 'block';
+
+    const visibleSessions = relaySessionFilter
+      ? relaySessions.filter(s=>s.id===relaySessionFilter)
+      : relaySessions;
+
+    visibleSessions.slice().reverse().forEach(session=>{
+      const wrap = document.createElement('div');
+      wrap.innerHTML = buildSessionCardHTML(session);
+      list.appendChild(wrap.firstElementChild);
+    });
+    wireRelayEvents(list);
+  }
+
+  function wireRelayEvents(root){
+    root.querySelectorAll('[data-action="filter"]').forEach(btn=>{
+      btn.addEventListener('click', function(){
+        const session = relaySessions.find(s=>s.id===this.dataset.session);
+        if(session) session.activeFilter = this.dataset.filter || null;
+        renderRelaySessions();
+        saveData();
+      });
+    });
+    root.querySelectorAll('[data-action="delete-session"]').forEach(btn=>{
+      btn.addEventListener('click', function(){
+        if(!confirm('Supprimer cette séance ?')) return;
+        relaySessions = relaySessions.filter(s=>s.id!==this.dataset.session);
+        if(relaySessionFilter === this.dataset.session) relaySessionFilter = null;
+        renderRelaySessions();
+        saveData();
+      });
+    });
+    root.querySelectorAll('[data-action="add-group3"]').forEach(btn=>{
+      btn.addEventListener('click', function(){ addRelayGroup(this.dataset.session, 3); });
+    });
+    root.querySelectorAll('[data-action="add-group4"]').forEach(btn=>{
+      btn.addEventListener('click', function(){ addRelayGroup(this.dataset.session, 4); });
+    });
+    root.querySelectorAll('[data-action="delete-group"]').forEach(btn=>{
+      btn.addEventListener('click', function(){
+        const session = relaySessions.find(s=>s.id===this.dataset.session);
+        if(session) session.groups = session.groups.filter(g=>g.id!==this.dataset.group);
+        renderRelaySessions();
+        saveData();
+      });
+    });
+    root.querySelectorAll('.relay-session-name').forEach(inp=>{
+      inp.addEventListener('input', function(){
+        const session = relaySessions.find(s=>s.id===this.dataset.session);
+        if(session) session.name = this.value;
+        saveData();
+      });
+    });
+    root.querySelectorAll('.relay-player-select').forEach(sel=>{
+      sel.addEventListener('change', function(){
+        const session = relaySessions.find(s=>s.id===this.dataset.session);
+        const group = session && session.groups.find(g=>g.id===this.dataset.group);
+        if(group){
+          const slot = parseInt(this.dataset.slot);
+          group.playerIds[slot] = this.value ? parseInt(this.value) : null;
+        }
+        renderRelaySessions();
+        saveData();
+      });
+    });
+    root.querySelectorAll('.relay-time-input').forEach(inp=>{
+      inp.addEventListener('click', function(){ openKeypad(this, 'Temps réalisé', 's'); });
+      inp.addEventListener('focus', function(){ this.blur(); openKeypad(this, 'Temps réalisé', 's'); });
+      inp.addEventListener('input', function(){
+        const session = relaySessions.find(s=>s.id===this.dataset.session);
+        const group = session && session.groups.find(g=>g.id===this.dataset.group);
+        if(group){
+          if(!group.actualTimes) group.actualTimes = {};
+          const legIdx = this.dataset.leg;
+          const v = parseFloat(this.value);
+          if(!isNaN(v)) group.actualTimes[legIdx] = v; else delete group.actualTimes[legIdx];
+        }
+        renderRelaySessions();
+        saveData();
+      });
+    });
+  }
+
+  // ---------- INIT ----------
+  const persisted = loadPersisted();
+  if(persisted && persisted.classes && Object.keys(persisted.classes).length){
+    store = persisted;
+  } else {
+    const id = 'c' + Date.now();
+    store = { currentClassId: id, classes: { [id]: emptyClassData('Classe 1') } };
+  }
+  loadClass(store.currentClassId);
+  persist();
+
+})();
+</script>
+
+</body>
+</html>

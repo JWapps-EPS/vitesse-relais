@@ -1477,11 +1477,11 @@
     return true;
   }
 
-  function generateRace(type){
+  function generateRace(type, silent){
     const pendingBefore = races.filter(r=>!r.completed).length;
     if(pendingBefore === 0){
       if(!generateOneRace(type)){
-        alert("Il faut au moins deux élèves disponibles.");
+        if(!silent) alert("Il faut au moins deux élèves disponibles.");
         return;
       }
     }
@@ -1726,6 +1726,8 @@
     race.ranks = ranks;
     race.pointsAwarded = awarded;
     race.completed = true;
+
+    generateRace(race.type, true);
 
     renderCurrentRace();
     renderRaceHistory();

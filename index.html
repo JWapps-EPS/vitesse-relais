@@ -1468,21 +1468,31 @@
     saveData();
   }
 
-  function handleRandomRace(){
+  function generateOneRace(type){
     const n = Math.max(2, parseInt(document.getElementById('runnersPerRace').value)||4);
     const pool = eligibleStudents();
-    if(pool.length < 2){ alert("Il faut au moins deux élèves disponibles."); return; }
-    const group = shuffle(pickBalancedGroup(pool, n));
-    createRace(group, 'aleatoire');
+    if(pool.length < 2) return false;
+    const group = type==='aleatoire' ? shuffle(pickBalancedGroup(pool, n)) : shuffle(pickLevelGroup(pool, n));
+    createRace(group, type);
+    return true;
   }
 
-  function handleLevelRace(){
-    const n = Math.max(2, parseInt(document.getElementById('runnersPerRace').value)||4);
-    const pool = eligibleStudents();
-    if(pool.length < 2){ alert("Il faut au moins deux élèves disponibles."); return; }
-    const group = shuffle(pickLevelGroup(pool, n));
-    createRace(group, 'niveau');
+  function generateRace(type){
+    const pendingBefore = races.filter(r=>!r.completed).length;
+    if(pendingBefore === 0){
+      if(!generateOneRace(type)){
+        alert("Il faut au moins deux élèves disponibles.");
+        return;
+      }
+    }
+    const pendingAfter = races.filter(r=>!r.completed).length;
+    if(pendingAfter <= 1){
+      generateOneRace(type);
+    }
   }
+
+  function handleRandomRace(){ generateRace('aleatoire'); }
+  function handleLevelRace(){ generateRace('niveau'); }
 
   function raceNumberOf(race){
     const idx = races.findIndex(r=>r.id===race.id);
@@ -1569,7 +1579,7 @@
         const st = studentById(pid);
         const name = st ? escapeHtml(st.name) : '(élève supprimé)';
         const info = distMap[pid];
-        const distTxt = info ? fmt(info.distanceToRun,0)+' m' : '—';
+        const distTxt = info ? (info.advance<=0.05 ? 'départ plein' : '+'+fmt(info.advance,0)+' m') : '—';
         rowsHtml += `<div class="race-participant next-runner">
             <span class="pname">${name}</span>
             <span class="next-distance">${distTxt}</span>

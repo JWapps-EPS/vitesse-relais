@@ -200,6 +200,13 @@
   .race-card.done{background:#F3F8F4; border-color:#CFE3D3;}
   .race-card.next-preview{background:#FBFAF8; border-style:dashed; border-color:var(--lane); margin-top:12px;}
   .next-gen-wrap{margin-top:14px; padding-top:14px; border-top:1px dashed var(--line);}
+  .next-runners-label{
+    grid-column:1/-1; font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:.03em;
+    color:var(--track); margin-top:6px; padding-top:8px; border-top:1px dashed var(--line);
+  }
+  .race-participant.next-runner{border-color:var(--track); background:#FDF2F1;}
+  .race-participant.next-runner .pname{color:var(--track);}
+  .next-distance{font-weight:800; color:var(--track); font-size:12.5px; font-family:ui-monospace,monospace; white-space:nowrap;}
   .race-head{display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px; margin-bottom:10px;}
   .race-head .title{font-weight:800; font-size:13px; text-transform:uppercase; letter-spacing:.03em;}
   .race-head .badge{font-size:10px; padding:2px 8px; border-radius:20px; font-weight:700; text-transform:uppercase;}
@@ -1510,7 +1517,7 @@
     return handicapHtml;
   }
 
-  function buildRaceCardHTML(race, num){
+  function buildRaceCardHTML(race, num, nextRace){
     const typeLabel = race.type==='aleatoire' ? '🎲 Aléatoire' : '📊 Niveau';
     const typeBadgeClass = race.type==='aleatoire' ? 'type-aleatoire' : 'type-niveau';
 
@@ -1551,6 +1558,24 @@
           </div>`;
       }
     });
+
+    if(nextRace && nextRace.participants.length){
+      const distMap = {};
+      if(nextRace.handicap && nextRace.handicap.rows){
+        nextRace.handicap.rows.forEach(r=> distMap[r.id] = r);
+      }
+      rowsHtml += `<div class="next-runners-label">🔜 Prochaine course — préparez-vous</div>`;
+      nextRace.participants.forEach(pid=>{
+        const st = studentById(pid);
+        const name = st ? escapeHtml(st.name) : '(élève supprimé)';
+        const info = distMap[pid];
+        const distTxt = info ? fmt(info.distanceToRun,0)+' m' : '—';
+        rowsHtml += `<div class="race-participant next-runner">
+            <span class="pname">${name}</span>
+            <span class="next-distance">${distTxt}</span>
+          </div>`;
+      });
+    }
     rowsHtml += '</div>';
 
     const handicapHtml = buildHandicapBlockHTML(race);
@@ -1561,29 +1586,6 @@
           : `<button class="btn" data-action="validate" data-race="${race.id}">Valider le classement</button>`
         }
         <button class="btn ghost" data-action="delete" data-race="${race.id}">Supprimer</button>
-      </div>`;
-
-    return head + rowsHtml + handicapHtml + actions;
-  }
-
-  function buildNextPreviewHTML(race){
-    let head = `<div class="race-head">
-      <div class="title">Course suivante — préparez-vous !</div>
-      <span class="badge" style="background:var(--lane-soft); color:#7A5B00;">À venir</span>
-    </div>`;
-
-    let rowsHtml = '<div class="race-participants">';
-    race.participants.forEach(pid=>{
-      const st = studentById(pid);
-      const name = st ? escapeHtml(st.name) : '(élève supprimé)';
-      rowsHtml += `<div class="race-participant"><span class="pname">${name}</span></div>`;
-    });
-    rowsHtml += '</div>';
-
-    const handicapHtml = buildHandicapBlockHTML(race);
-
-    const actions = `<div class="race-actions">
-        <button class="btn ghost" data-action="delete" data-race="${race.id}">Annuler cette course</button>
       </div>`;
 
     return head + rowsHtml + handicapHtml + actions;
@@ -1637,9 +1639,9 @@
     if(!current){
       html += buildGenerateButtonsHTML(false);
     } else {
-      html += `<div class="race-card">${buildRaceCardHTML(current, raceNumberOf(current))}</div>`;
+      html += `<div class="race-card">${buildRaceCardHTML(current, raceNumberOf(current), next)}</div>`;
       if(next){
-        html += `<div class="race-card next-preview">${buildNextPreviewHTML(next)}</div>`;
+        html += `<div class="next-gen-wrap"><button type="button" class="btn ghost" data-action="delete" data-race="${next.id}">Annuler la course suivante</button></div>`;
       } else {
         html += `<div class="next-gen-wrap">${buildGenerateButtonsHTML(true)}</div>`;
       }

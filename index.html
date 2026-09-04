@@ -147,29 +147,45 @@
   /* start-line diagram */
   .track-wrap{overflow-x:auto; padding-bottom:4px;}
   .lane{
-    position:relative; height:34px; background:
+    position:relative; height:46px; background:
       repeating-linear-gradient(90deg, #EDEAE0 0 1px, transparent 1px 100%),
       linear-gradient(#f7f6f2,#f7f6f2);
     background-size: calc(var(--pct,10%)) 100%, 100% 100%;
     border-bottom:1px solid var(--line);
-    display:flex; align-items:center; min-width:520px;
+    display:flex; align-items:center; min-width:560px;
   }
   .lane:first-child{border-top:1px solid var(--line);}
   .lane .name{
-    position:absolute; left:6px; font-size:11.5px; font-weight:700; color:var(--ink);
-    z-index:2; text-shadow:0 0 4px #fff, 0 0 4px #fff;
+    position:absolute; left:8px; font-size:15px; font-weight:800; color:var(--ink);
+    z-index:2; text-shadow:0 0 5px #fff, 0 0 5px #fff, 0 0 5px #fff;
   }
   .lane .marker{
-    position:absolute; top:4px; bottom:4px; width:4px; border-radius:2px;
+    position:absolute; top:4px; bottom:4px; width:5px; border-radius:2px;
     background:var(--track);
   }
   .lane .marker.leader{background:var(--ink);}
   .finish-line{
-    position:relative; height:20px; min-width:520px;
+    position:relative; height:22px; min-width:560px;
     background:repeating-linear-gradient(90deg,#111 0 10px, #fff 10px 20px);
     opacity:.85; border-radius:0 0 6px 6px;
   }
   .finish-label{font-size:10px; text-transform:uppercase; letter-spacing:.06em; color:var(--ink-soft); text-align:right; margin-top:4px;}
+
+  /* résultats — cartes grandes et lisibles */
+  .result-row{
+    display:flex; align-items:center; justify-content:space-between; gap:14px;
+    padding:14px 16px; border:1px solid var(--line); border-radius:10px; background:#fff;
+    margin-bottom:8px;
+  }
+  .result-row.leader{border-color:var(--ink); background:#F6F6F4;}
+  .result-name{font-size:19px; font-weight:800; line-height:1.15;}
+  .result-meta{font-size:12.5px; color:var(--ink-soft); margin-top:3px; font-weight:600;}
+  .result-distance{
+    font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+    font-size:27px; font-weight:800; color:var(--track); white-space:nowrap; text-align:right;
+  }
+  .result-row.leader .result-distance{color:var(--ink);}
+  .result-distance .unit{font-size:14px; font-weight:700; color:var(--ink-soft); margin-left:2px;}
 
   footer.note{font-size:12px; color:var(--ink-soft); text-align:center; margin-top:24px;}
 
@@ -182,6 +198,8 @@
   /* tournoi */
   .race-card{border:1px solid var(--line); border-radius:8px; padding:12px 14px; margin-bottom:12px; background:#FBFAF8;}
   .race-card.done{background:#F3F8F4; border-color:#CFE3D3;}
+  .race-card.next-preview{background:#FBFAF8; border-style:dashed; border-color:var(--lane); margin-top:12px;}
+  .next-gen-wrap{margin-top:14px; padding-top:14px; border-top:1px dashed var(--line);}
   .race-head{display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px; margin-bottom:10px;}
   .race-head .title{font-weight:800; font-size:13px; text-transform:uppercase; letter-spacing:.03em;}
   .race-head .badge{font-size:10px; padding:2px 8px; border-radius:20px; font-weight:700; text-transform:uppercase;}
@@ -387,6 +405,8 @@
       </div>
       <div class="empty" id="timeEmpty">Importez d'abord des élèves dans l'onglet « Élèves ».</div>
     </div>
+
+    <button type="button" class="fab no-print" id="btnOpenSpeedSettings" title="Niveaux de vitesse" aria-label="Niveaux de vitesse">⚙️</button>
   </section>
 
   <!-- ===== PANEL 3 : HANDICAP ===== -->
@@ -430,18 +450,8 @@
           <div class="finish-label">Ligne d'arrivée →</div>
         </div>
 
-        <h2 style="font-size:15px; margin:22px 0 10px;">Tableau des départs</h2>
-        <table id="resultsTable">
-          <thead>
-            <tr>
-              <th>Élève</th>
-              <th class="right">Vitesse test</th>
-              <th class="right">Distance à parcourir</th>
-              <th class="right">Avance / recul</th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
+        <h2 style="font-size:15px; margin:22px 0 10px;">Départs — un coup d'œil suffit</h2>
+        <div id="resultsList"></div>
       </div>
     </div>
   </section>
@@ -563,6 +573,38 @@
   </div>
 </div>
 
+<!-- ===== SETTINGS MODAL (VITESSE) ===== -->
+<div class="keypad-overlay no-print" id="speedSettingsOverlay">
+  <div class="keypad-box" style="max-width:380px; text-align:left;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+      <div class="keypad-title" style="margin:0;">Niveaux de vitesse</div>
+      <button type="button" class="btn ghost" id="speedSettingsClose" style="padding:4px 10px; font-size:15px;">✕</button>
+    </div>
+    <p class="hint" id="speedSettingsDistLabel" style="margin-top:0;">Distance : 60 m</p>
+    <p class="hint" style="margin-top:0;">Seuils sur le meilleur temps réalisé (en secondes), propres à cette distance. Mêmes couleurs que pour le relais.</p>
+    <div class="row">
+      <div>
+        <label for="speedThreshold1">🟩 Excellent : temps ≤</label>
+        <input type="text" inputmode="decimal" readonly id="speedThreshold1" value="0">
+      </div>
+      <div>
+        <label for="speedThreshold2">🟢 Bien : temps ≤</label>
+        <input type="text" inputmode="decimal" readonly id="speedThreshold2" value="0">
+      </div>
+    </div>
+    <div class="row" style="margin-top:12px;">
+      <div>
+        <label for="speedThreshold3">🟠 Moyen : temps ≤</label>
+        <input type="text" inputmode="decimal" readonly id="speedThreshold3" value="0">
+      </div>
+      <div>
+        <label>🔴 Mauvais</label>
+        <p class="hint" style="margin-top:9px;">Au-delà du seuil « Moyen ».</p>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- ===== NUMERIC KEYPAD MODAL ===== -->
 <div class="keypad-overlay no-print" id="keypadOverlay">
   <div class="keypad-box">
@@ -633,7 +675,9 @@
       tournoiConfig: { runnersPerRace:'4', refDistance:'', raceDistance:'30' },
       relaySessions: [], relaySessionNextId: 1, relayGroupNextId: 1,
       relayConfig: { refDistance:'', t1:0, t2:0.5, t3:1.5 },
-      relaySessionFilter: null
+      relaySessionFilter: null,
+      speedBareme: {},
+      handicapRaceDistance: '60'
     };
   }
 
@@ -652,6 +696,7 @@
   let relayGroupNextId = 1;
   let relayBareme = { t1:0, t2:0.5, t3:1.5 };
   let relaySessionFilter = null;
+  let speedBareme = {};
   let lastResults = null;
 
   // ---------- HELPERS ----------
@@ -684,6 +729,13 @@
     const valid = arr.filter(t => t!==null && t!==undefined && t>0);
     if(!valid.length) return null;
     return valid.reduce((a,b)=>a+b,0) / valid.length;
+  }
+
+  function bestTime(arr){
+    if(!arr) return null;
+    const valid = arr.filter(t => t!==null && t!==undefined && t>0);
+    if(!valid.length) return null;
+    return Math.min(...valid);
   }
 
   function shuffle(arr){
@@ -724,6 +776,8 @@
       t1: relayBareme.t1, t2: relayBareme.t2, t3: relayBareme.t3
     };
     c.relaySessionFilter = relaySessionFilter;
+    c.speedBareme = speedBareme;
+    c.handicapRaceDistance = document.getElementById('raceDistance').value;
   }
 
   function saveData(){
@@ -742,11 +796,13 @@
     relaySessions = c.relaySessions; relaySessionNextId = c.relaySessionNextId; relayGroupNextId = c.relayGroupNextId;
     relayBareme = { t1: c.relayConfig.t1, t2: c.relayConfig.t2, t3: c.relayConfig.t3 };
     relaySessionFilter = c.relaySessionFilter || null;
+    speedBareme = c.speedBareme || {};
     lastResults = null;
 
     document.getElementById('runnersPerRace').value = c.tournoiConfig.runnersPerRace || '4';
     document.getElementById('tournoiRaceDistance').value = c.tournoiConfig.raceDistance || '30';
     document.getElementById('testAttemptsInput').value = testAttempts;
+    document.getElementById('raceDistance').value = c.handicapRaceDistance || '60';
     document.getElementById('relayThreshold1').value = String(relayBareme.t1).replace('.',',');
     document.getElementById('relayThreshold2').value = String(relayBareme.t2).replace('.',',');
     document.getElementById('relayThreshold3').value = String(relayBareme.t3).replace('.',',');
@@ -975,7 +1031,7 @@
     const thead = document.querySelector('#timeTable thead tr');
     let headHtml = '<th>Élève</th>';
     for(let i=1;i<=testAttempts;i++) headHtml += `<th style="width:64px;">Essai ${i}</th>`;
-    headHtml += '<th class="right">Moyenne</th><th class="right">Vitesse</th>';
+    headHtml += '<th class="right">Moyenne</th><th class="right">Vitesse</th><th class="center">Niveau</th>';
     thead.innerHTML = headHtml;
 
     students.forEach(s=>{
@@ -990,7 +1046,7 @@
         const v = arr[i];
         rowHtml += `<td><input type="text" inputmode="decimal" readonly class="num time-attempt-input" value="${v!==null&&v!==undefined?v:''}" data-id="${s.id}" data-attempt="${i}" placeholder="—"></td>`;
       }
-      rowHtml += `<td class="right num" id="avg-${s.id}">—</td><td class="right num" id="speed-${s.id}">—</td>`;
+      rowHtml += `<td class="right num" id="avg-${s.id}">—</td><td class="right num" id="speed-${s.id}">—</td><td class="center" id="level-${s.id}">—</td>`;
       tr.innerHTML = rowHtml;
       tbody.appendChild(tr);
 
@@ -1010,17 +1066,78 @@
     });
   }
 
+  function ensureSpeedBareme(distKey){
+    if(!speedBareme[distKey]){
+      const d = parseFloat(distKey) || 0;
+      speedBareme[distKey] = { t1: +(d/7).toFixed(2), t2: +(d/6).toFixed(2), t3: +(d/5).toFixed(2) };
+    }
+    return speedBareme[distKey];
+  }
+
+  function classifySpeedLevel(time, distKey){
+    const b = speedBareme[distKey];
+    if(!b || time===null) return null;
+    if(time <= b.t1) return relayLevels[3];
+    if(time <= b.t2) return relayLevels[2];
+    if(time <= b.t3) return relayLevels[1];
+    return relayLevels[0];
+  }
+
   function updateSpeedCell(id, dist){
     const key = String(dist);
     const avgCell = document.getElementById('avg-'+id);
     const speedCell = document.getElementById('speed-'+id);
+    const levelCell = document.getElementById('level-'+id);
     if(!speedCell) return;
     const arr = tests[key] ? tests[key][id] : undefined;
     const avg = averageTime(arr);
     if(avgCell) avgCell.textContent = avg!==null ? fmt(avg,2)+' s' : '—';
     const sp = speedFor(dist, avg);
     speedCell.textContent = sp ? `${fmt(sp.kmh,2)} km/h` : '—';
+    if(levelCell){
+      const best = bestTime(arr);
+      ensureSpeedBareme(key);
+      const level = best!==null ? classifySpeedLevel(best, key) : null;
+      levelCell.innerHTML = level ? `<span title="${level.label} — meilleur temps ${fmt(best,2)} s">${level.emoji}</span>` : '<span class="muted">—</span>';
+    }
   }
+
+  function refreshSpeedSettingsModal(){
+    const key = String(currentTestDistance());
+    const b = ensureSpeedBareme(key);
+    document.getElementById('speedSettingsDistLabel').textContent = `Distance : ${key} m`;
+    document.getElementById('speedThreshold1').value = String(b.t1).replace('.',',');
+    document.getElementById('speedThreshold2').value = String(b.t2).replace('.',',');
+    document.getElementById('speedThreshold3').value = String(b.t3).replace('.',',');
+  }
+
+  document.getElementById('btnOpenSpeedSettings').addEventListener('click', function(){
+    refreshSpeedSettingsModal();
+    document.getElementById('speedSettingsOverlay').classList.add('open');
+  });
+  document.getElementById('speedSettingsClose').addEventListener('click', function(){
+    document.getElementById('speedSettingsOverlay').classList.remove('open');
+  });
+  document.getElementById('speedSettingsOverlay').addEventListener('click', function(e){
+    if(e.target === this) this.classList.remove('open');
+  });
+
+  function wireSpeedThreshold(id, key){
+    const el = document.getElementById(id);
+    el.addEventListener('click', function(){ openKeypad(this, this.previousElementSibling.textContent, 's'); });
+    el.addEventListener('focus', function(){ this.blur(); openKeypad(this, this.previousElementSibling.textContent, 's'); });
+    el.addEventListener('input', function(){
+      const distKey = String(currentTestDistance());
+      const b = ensureSpeedBareme(distKey);
+      const v = parseFloat((this.value||'0').replace(',', '.'));
+      b[key] = isNaN(v) ? 0 : v;
+      renderTimeTable();
+      saveData();
+    });
+  }
+  wireSpeedThreshold('speedThreshold1', 't1');
+  wireSpeedThreshold('speedThreshold2', 't2');
+  wireSpeedThreshold('speedThreshold3', 't3');
 
   // ---------- CLAVIER NUMÉRIQUE ----------
   let activeKeypadInput = null;
@@ -1074,6 +1191,7 @@
     if(document.getElementById('keypadOverlay').classList.contains('open')) closeKeypad();
     if(document.getElementById('settingsOverlay').classList.contains('open')) document.getElementById('settingsOverlay').classList.remove('open');
     if(document.getElementById('relaySettingsOverlay').classList.contains('open')) document.getElementById('relaySettingsOverlay').classList.remove('open');
+    if(document.getElementById('speedSettingsOverlay').classList.contains('open')) document.getElementById('speedSettingsOverlay').classList.remove('open');
   });
 
   document.getElementById('keypadValidate').addEventListener('click', function(){
@@ -1094,6 +1212,8 @@
   });
 
   // ---------- HANDICAP (calculateur simple) ----------
+  document.getElementById('raceDistance').addEventListener('input', saveData);
+
   function renderRefDistanceOptions(){
     const sel = document.getElementById('refDistanceSelect');
     const opts = distancesWithData();
@@ -1167,16 +1287,19 @@
       laneDiagram.appendChild(lane);
     });
 
-    const tbody = document.querySelector('#resultsTable tbody');
+    const tbody = document.getElementById('resultsList');
     tbody.innerHTML = '';
     rows.forEach(r=>{
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td>${escapeHtml(r.name)}</td>
-        <td class="right num">${fmt(r.speedKmh,2)} km/h</td>
-        <td class="right num">${fmt(r.distanceToRun,1)} m</td>
-        <td class="right num">${ r.advance>0.05 ? '+ '+fmt(r.advance,1)+' m' : '— (part sur la ligne)' }</td>`;
-      tbody.appendChild(tr);
+      const isLeader = r.advance <= 0.05;
+      const row = document.createElement('div');
+      row.className = 'result-row' + (isLeader ? ' leader' : '');
+      row.innerHTML = `
+        <div>
+          <div class="result-name">${isLeader ? '🏁 ' : ''}${escapeHtml(r.name)}</div>
+          <div class="result-meta">${fmt(r.speedKmh,1)} km/h ${isLeader ? '· part au départ' : '· avance de ' + fmt(r.advance,1) + ' m'}</div>
+        </div>
+        <div class="result-distance">${fmt(r.distanceToRun,0)}<span class="unit">m à courir</span></div>`;
+      tbody.appendChild(row);
     });
   }
 
@@ -1245,8 +1368,15 @@
   document.getElementById('tournoiRaceDistance').addEventListener('input', saveData);
   document.getElementById('tournoiRefDistance').addEventListener('change', saveData);
 
+  function pendingParticipantIds(){
+    const ids = new Set();
+    races.filter(r=>!r.completed).forEach(r=> r.participants.forEach(pid=>ids.add(pid)));
+    return ids;
+  }
+
   function eligibleStudents(){
-    return students.filter(s=> s.status==='disponible');
+    const busy = pendingParticipantIds();
+    return students.filter(s=> s.status==='disponible' && !busy.has(s.id));
   }
 
   function pickBalancedGroup(pool, n){
@@ -1350,6 +1480,34 @@
     return races.length - idx;
   }
 
+  function buildHandicapBlockHTML(race){
+    let handicapHtml = '';
+    if(race.handicap){
+      if(race.handicap.rows){
+        handicapHtml += `<div style="margin-top:10px; padding-top:10px; border-top:1px dashed var(--line);">
+          <div style="font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:.03em; color:var(--ink-soft); margin-bottom:6px;">Départs handicap — course de ${race.handicap.raceDist} m (vitesse sur ${race.handicap.refDist} m)</div>`;
+        race.handicap.rows.forEach(r=>{
+          const st = studentById(r.id);
+          const name = st ? escapeHtml(st.name) : '?';
+          const isLeader = r.advance <= 0.05;
+          handicapHtml += `<div style="display:flex; justify-content:space-between; font-size:12.5px; padding:2px 0;">
+              <span>${isLeader ? '🏁 ' : ''}${name}</span>
+              <span class="num">${isLeader
+                ? `part au départ — ${fmt(race.handicap.raceDist,0)} m à courir (${fmt(r.speedKmh,1)} km/h, le plus rapide)`
+                : `part à ${fmt(r.advance,1)} m devant (${fmt(r.distanceToRun,1)} m à courir)`}</span>
+            </div>`;
+        });
+        if(race.handicap.missing.length){
+          handicapHtml += `<div class="muted" style="font-size:11px; margin-top:4px;">Vitesse non mesurée pour : ${race.handicap.missing.map(escapeHtml).join(', ')}</div>`;
+        }
+        handicapHtml += `</div>`;
+      } else {
+        handicapHtml += `<div class="muted" style="font-size:11.5px; margin-top:8px; padding-top:8px; border-top:1px dashed var(--line);">Pas assez de vitesses mesurées pour calculer le handicap de cette course (onglet Vitesse).</div>`;
+      }
+    }
+    return handicapHtml;
+  }
+
   function buildRaceCardHTML(race, num){
     const typeLabel = race.type==='aleatoire' ? '🎲 Aléatoire' : '📊 Niveau';
     const typeBadgeClass = race.type==='aleatoire' ? 'type-aleatoire' : 'type-niveau';
@@ -1393,30 +1551,7 @@
     });
     rowsHtml += '</div>';
 
-    let handicapHtml = '';
-    if(race.handicap){
-      if(race.handicap.rows){
-        handicapHtml += `<div style="margin-top:10px; padding-top:10px; border-top:1px dashed var(--line);">
-          <div style="font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:.03em; color:var(--ink-soft); margin-bottom:6px;">Départs handicap — course de ${race.handicap.raceDist} m (vitesse sur ${race.handicap.refDist} m)</div>`;
-        race.handicap.rows.forEach(r=>{
-          const st = studentById(r.id);
-          const name = st ? escapeHtml(st.name) : '?';
-          const isLeader = r.advance <= 0.05;
-          handicapHtml += `<div style="display:flex; justify-content:space-between; font-size:12.5px; padding:2px 0;">
-              <span>${isLeader ? '🏁 ' : ''}${name}</span>
-              <span class="num">${isLeader
-                ? `part au départ — ${fmt(race.handicap.raceDist,0)} m à courir (${fmt(r.speedKmh,1)} km/h, le plus rapide)`
-                : `part à ${fmt(r.advance,1)} m devant (${fmt(r.distanceToRun,1)} m à courir)`}</span>
-            </div>`;
-        });
-        if(race.handicap.missing.length){
-          handicapHtml += `<div class="muted" style="font-size:11px; margin-top:4px;">Vitesse non mesurée pour : ${race.handicap.missing.map(escapeHtml).join(', ')}</div>`;
-        }
-        handicapHtml += `</div>`;
-      } else {
-        handicapHtml += `<div class="muted" style="font-size:11.5px; margin-top:8px; padding-top:8px; border-top:1px dashed var(--line);">Pas assez de vitesses mesurées pour calculer le handicap de cette course (onglet Vitesse).</div>`;
-      }
-    }
+    const handicapHtml = buildHandicapBlockHTML(race);
 
     let actions = `<div class="race-actions">
         ${race.completed
@@ -1427,6 +1562,40 @@
       </div>`;
 
     return head + rowsHtml + handicapHtml + actions;
+  }
+
+  function buildNextPreviewHTML(race){
+    let head = `<div class="race-head">
+      <div class="title">Course suivante — préparez-vous !</div>
+      <span class="badge" style="background:var(--lane-soft); color:#7A5B00;">À venir</span>
+    </div>`;
+
+    let rowsHtml = '<div class="race-participants">';
+    race.participants.forEach(pid=>{
+      const st = studentById(pid);
+      const name = st ? escapeHtml(st.name) : '(élève supprimé)';
+      rowsHtml += `<div class="race-participant"><span class="pname">${name}</span></div>`;
+    });
+    rowsHtml += '</div>';
+
+    const handicapHtml = buildHandicapBlockHTML(race);
+
+    const actions = `<div class="race-actions">
+        <button class="btn ghost" data-action="delete" data-race="${race.id}">Annuler cette course</button>
+      </div>`;
+
+    return head + rowsHtml + handicapHtml + actions;
+  }
+
+  function buildGenerateButtonsHTML(isNext){
+    const hint = isNext
+      ? "La course en cours n'est pas encore terminée. Vous pouvez déjà préparer la suivante pour que ce groupe se mette en place."
+      : "Les élèves absents ou en arrêt ne sont jamais sélectionnés ; la sélection équilibre le nombre de courses de chacun.";
+    return `<p class="hint" style="margin-top:0;">${hint}</p>
+      <div style="display:flex; gap:10px; flex-wrap:wrap;">
+        <button class="btn" data-gen="random">🎲 Course aléatoire</button>
+        <button class="btn secondary" data-gen="level">📊 Course par niveau (classement proche)</button>
+      </div>`;
   }
 
   function wireRaceCard(root){
@@ -1458,24 +1627,28 @@
 
   function renderCurrentRace(){
     const area = document.getElementById('currentRaceArea');
-    const current = races.find(r=>!r.completed);
+    const pending = races.filter(r=>!r.completed).sort((a,b)=>a.id-b.id);
+    const current = pending[0] || null;
+    const next = pending[1] || null;
+
+    let html = '';
     if(!current){
-      area.innerHTML = `
-        <p class="hint" style="margin-top:0;">Prêt pour une nouvelle course. Les élèves absents ou en arrêt ne sont jamais sélectionnés ; la sélection équilibre le nombre de courses de chacun.</p>
-        <div style="display:flex; gap:10px; flex-wrap:wrap;">
-          <button class="btn" id="btnRandomRace">🎲 Course aléatoire</button>
-          <button class="btn secondary" id="btnLevelRace">📊 Course par niveau (classement proche)</button>
-        </div>`;
-      document.getElementById('btnRandomRace').addEventListener('click', handleRandomRace);
-      document.getElementById('btnLevelRace').addEventListener('click', handleLevelRace);
+      html += buildGenerateButtonsHTML(false);
     } else {
-      const card = document.createElement('div');
-      card.className = 'race-card' + (current.completed ? ' done' : '');
-      card.innerHTML = buildRaceCardHTML(current, raceNumberOf(current));
-      area.innerHTML = '';
-      area.appendChild(card);
-      wireRaceCard(area);
+      html += `<div class="race-card">${buildRaceCardHTML(current, raceNumberOf(current))}</div>`;
+      if(next){
+        html += `<div class="race-card next-preview">${buildNextPreviewHTML(next)}</div>`;
+      } else {
+        html += `<div class="next-gen-wrap">${buildGenerateButtonsHTML(true)}</div>`;
+      }
     }
+    area.innerHTML = html;
+    wireRaceCard(area);
+    area.querySelectorAll('[data-gen]').forEach(btn=>{
+      btn.addEventListener('click', function(){
+        if(this.dataset.gen === 'random') handleRandomRace(); else handleLevelRace();
+      });
+    });
   }
 
   function renderRaceHistory(){

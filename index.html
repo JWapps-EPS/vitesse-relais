@@ -230,6 +230,18 @@
   }
   .rank-btn.selected{background:var(--track); border-color:var(--track); color:#fff;}
   .rank-btn:disabled{opacity:.3; cursor:not-allowed; background:var(--bg);}
+
+  /* bouton de suppression sécurisé par appui long */
+  .hold-delete-btn{
+    position:relative; overflow:hidden; -webkit-user-select:none; user-select:none;
+    touch-action:none;
+  }
+  .hold-delete-btn::before{
+    content:""; position:absolute; left:0; top:0; bottom:0; width:var(--hold-pct,0%);
+    background:var(--track); opacity:.5; z-index:0; pointer-events:none;
+  }
+  .hold-delete-btn.holding{color:#fff;}
+  .hold-delete-btn > span{position:relative; z-index:1;}
   .race-actions{display:flex; gap:8px; margin-top:10px;}
   #generalTable tr:nth-child(1) td.rangcell{color:var(--track); font-weight:800;}
   #generalTable tr:nth-child(2) td.rangcell, #generalTable tr:nth-child(3) td.rangcell{font-weight:800;}
@@ -754,6 +766,58 @@
       [arr[i],arr[j]] = [arr[j],arr[i]];
     }
     return arr;
+  }
+
+  // Bouton sécurisé : il faut maintenir l'appui `duration` ms pour déclencher onConfirm.
+  // Un relâchement avant la fin annule sans rien faire (protège contre les appuis accidentels).
+  function wireHoldToConfirm(btn, duration, onConfirm){
+    let timer = null;
+    let raf = null;
+    let startTime = null;
+
+    function setPct(pct){
+      btn.style.setProperty('--hold-pct', pct + '%');
+    }
+
+    function tick(){
+      const elapsed = Date.now() - startTime;
+      const pct = Math.min(100, (elapsed / duration) * 100);
+      setPct(pct);
+      if(pct < 100){
+        raf = requestAnimationFrame(tick);
+      }
+    }
+
+    function start(e){
+      e.preventDefault();
+      if(timer) return;
+      btn.classList.add('holding');
+      startTime = Date.now();
+      tick();
+      timer = setTimeout(function(){
+        timer = null;
+        cancelHoldVisual();
+        onConfirm();
+      }, duration);
+    }
+
+    function cancelHoldVisual(){
+      if(raf){ cancelAnimationFrame(raf); raf = null; }
+      btn.classList.remove('holding');
+      setPct(0);
+    }
+
+    function cancel(){
+      if(timer){ clearTimeout(timer); timer = null; }
+      cancelHoldVisual();
+    }
+
+    btn.addEventListener('pointerdown', start);
+    btn.addEventListener('pointerup', cancel);
+    btn.addEventListener('pointerleave', cancel);
+    btn.addEventListener('pointercancel', cancel);
+    btn.addEventListener('contextmenu', function(e){ e.preventDefault(); });
+    btn.addEventListener('click', function(e){ e.preventDefault(); });
   }
 
   function distancesWithData(){
@@ -1902,7 +1966,7 @@
     let html = `<div class="relay-group" style="--gcolor:${color}; border-left-color:${color};" data-group="${group.id}">
        <div class="relay-group-head">
          <span class="relay-group-title"><span class="relay-group-badge">${num}</span>Groupe ${num} <span class="muted" style="text-transform:none; font-weight:400; font-size:11px;">(${group.size} coureurs)</span></span>
-         <button type="button" class="btn ghost" data-action="delete-group" data-session="${session.id}" data-group="${group.id}" style="padding:3px 9px; font-size:11px;">✕</button>
+         <button type="button" class="btn ghost hold-delete-btn" data-action="delete-group" data-session="${session.id}" data-group="${group.id}" title="Maintenir 3 secondes pour supprimer" style="padding:4px 10px; font-size:11px;"><span>✕</span></button>
        </div>
        <div class="relay-selects">`;
     for(let i=0;i<group.size;i++){
@@ -2047,9 +2111,9 @@
       btn.addEventListener('click', function(){ addRelayGroup(this.dataset.session, 4); });
     });
     root.querySelectorAll('[data-action="delete-group"]').forEach(btn=>{
-      btn.addEventListener('click', function(){
-        const session = relaySessions.find(s=>s.id===this.dataset.session);
-        if(session) session.groups = session.groups.filter(g=>g.id!==this.dataset.group);
+      wireHoldToConfirm(btn, 3000, function(){
+        const session = relaySessions.find(s=>s.id===btn.dataset.session);
+        if(session) session.groups = session.groups.filter(g=>g.id!==btn.dataset.group);
         renderRelaySessions();
         saveData();
       });
